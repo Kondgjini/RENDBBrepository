@@ -29,8 +29,11 @@ public class LoginActivity extends AppCompatActivity {
                 String username = txtUsername.getText().toString();
                 String password = txtPassword.getText().toString();
 
-                // Perform login validation here
-                if (username.equals("admin") && password.equals("password")) {
+                // Hardcoded credentials for demonstration
+                String validUsername = "admin";
+                String validPassword = "password";
+
+                if (username.equals(validUsername) && password.equals(validPassword)) {
                     // If login is successful, navigate to ManagerDashboardActivity
                     Intent intent = new Intent(LoginActivity.this, ManagerDashboardActivity.class);
                     startActivity(intent);
