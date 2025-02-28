@@ -8,11 +8,15 @@ import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.rendbb.R;
+import com.example.rendbb.utilities.DatabaseHelper;
+import com.example.rendbb.views.SessionManager;
 
 public class LoginActivity extends AppCompatActivity {
 
     private EditText txtUsername, txtPassword;
     private Button buttonLogin;
+    private DatabaseHelper dbHelper;
+    private SessionManager session;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,18 +27,18 @@ public class LoginActivity extends AppCompatActivity {
         txtPassword = findViewById(R.id.password);
         buttonLogin = findViewById(R.id.login_button);
 
+        dbHelper = new DatabaseHelper(this);
+        session = new SessionManager(getApplicationContext());
+
         buttonLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String username = txtUsername.getText().toString();
-                String password = txtPassword.getText().toString();
+                String username = txtUsername.getText().toString().trim();
+                String password = txtPassword.getText().toString().trim();
 
-                // Hardcoded credentials for demonstration
-                String validUsername = "admin";
-                String validPassword = "password";
-
-                if (username.equals(validUsername) && password.equals(validPassword)) {
-                    // If login is successful, navigate to ManagerDashboardActivity
+                if (dbHelper.authenticateUser(username, password)) {
+                    // If login is successful, create a session and navigate to ManagerDashboardActivity
+                    session.createLoginSession("1", username, "user@example.com"); // Replace with actual user details
                     Intent intent = new Intent(LoginActivity.this, ManagerDashboardActivity.class);
                     startActivity(intent);
                     finish();
