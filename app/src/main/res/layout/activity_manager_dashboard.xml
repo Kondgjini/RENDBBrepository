@@ -1,27 +1,18 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- Buttons -->
-    <Button
-        android:id="@+id/addPropertyButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Add Property" />
+    <!-- Other UI elements -->
 
-    <Button
-        android:id="@+id/manageBookingsButton"
-        android:layout_width="match_parent"
+    <ImageButton
+        android:id="@+id/button_settings"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Manage Bookings" />
+        android:src="@android:drawable/ic_menu_preferences"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:contentDescription="Settings" />
 
-    <!-- RecyclerView -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/propertiesRecyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="16dp" />
-</LinearLayout>
+</RelativeLayout>
