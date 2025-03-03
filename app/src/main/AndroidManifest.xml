@@ -26,6 +26,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".views.EditPropertyActivity"
+            android:label="Edit Property"
+            android:parentActivityName=".views.PropertyDetailsActivity"/>
+        <activity android:name=".views.AddBookingActivity"
+            android:label="Add Booking"
+            android:parentActivityName=".views.PropertyDetailsActivity"/>
         <activity android:name=".views.PreferencesActivity" />
         <receiver android:name=".receivers.StatusNotificationReceiver" />
 
