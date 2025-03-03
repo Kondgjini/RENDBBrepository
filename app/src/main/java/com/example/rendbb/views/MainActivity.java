@@ -11,29 +11,33 @@ public class MainActivity extends AppCompatActivity {
 
     private Button buttonLogin;
     private Button buttonRegister;
+    private SessionManager session;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Check if user is already logged in
+        session = new SessionManager(getApplicationContext());
+        if (session.isLoggedIn()) {
+            startActivity(new Intent(this, ManagerDashboardActivity.class));
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_main);
 
         buttonLogin = findViewById(R.id.button_login);
         buttonRegister = findViewById(R.id.button_register);
 
-        buttonLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, LoginActivity.class);
-                startActivity(intent);
-            }
+        buttonLogin.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, LoginActivity.class);
+            startActivity(intent);
         });
 
-        buttonRegister.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, RegisterActivity.class);
-                startActivity(intent);
-            }
+        buttonRegister.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, RegisterActivity.class);
+            startActivity(intent);
         });
     }
 }

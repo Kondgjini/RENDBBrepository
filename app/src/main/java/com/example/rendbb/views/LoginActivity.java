@@ -1,9 +1,9 @@
 package com.example.rendbb.views;
 
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
+import android.text.TextUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -13,37 +13,68 @@ import com.example.rendbb.utilities.DatabaseHelper;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private EditText usernameEditText, passwordEditText;
-    private Button loginButton;
+    private EditText txtUsername, txtPassword;
+    private Button buttonLogin;
     private DatabaseHelper dbHelper;
-    private static final String TAG = "LoginActivity";
+    private SessionManager session;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-        usernameEditText = findViewById(R.id.username);
-        passwordEditText = findViewById(R.id.password);
-        loginButton = findViewById(R.id.login_button);
+        txtUsername = findViewById(R.id.username);
+        txtPassword = findViewById(R.id.password);
+        buttonLogin = findViewById(R.id.login_button);
+
         dbHelper = new DatabaseHelper(this);
+        session = new SessionManager(getApplicationContext());
 
-        loginButton.setOnClickListener(v -> {
-            String username = usernameEditText.getText().toString().trim();
-            String password = passwordEditText.getText().toString().trim();
+        // Check if user is already logged in
+        if (session.isLoggedIn()) {
+            startActivity(new Intent(this, ManagerDashboardActivity.class));
+            finish();
+            return;
+        }
 
-            Log.d(TAG, "Attempting to log in with username: " + username);
+        buttonLogin.setOnClickListener(v -> {
+            String username = txtUsername.getText().toString().trim();
+            String password = txtPassword.getText().toString().trim();
+
+            // Validate inputs
+            if (TextUtils.isEmpty(username)) {
+                txtUsername.setError("Username is required");
+                txtUsername.requestFocus();
+                return;
+            }
+
+            if (TextUtils.isEmpty(password)) {
+                txtPassword.setError("Password is required");
+                txtPassword.requestFocus();
+                return;
+            }
 
             if (dbHelper.authenticateUser(username, password)) {
-                Log.d(TAG, "Login successful for username: " + username);
-                // If login is successful, navigate to ManagerDashboardActivity
+                // Get user details
+                Cursor cursor = dbHelper.getUserDetails(username);
+                if (cursor.moveToFirst()) {
+                    String id = cursor.getString(cursor.getColumnIndex("id"));
+                    String email = cursor.getString(cursor.getColumnIndex("email"));
+
+                    // Create login session
+                    session.createLoginSession(id, username, email);
+
+                    // Update last login time
+                    dbHelper.updateLastLogin(username);
+                }
+                cursor.close();
+
+                // Navigate to dashboard
                 Intent intent = new Intent(LoginActivity.this, ManagerDashboardActivity.class);
                 startActivity(intent);
                 finish();
             } else {
-                Log.d(TAG, "Login failed for username: " + username);
-                // Show login error
-                Toast.makeText(LoginActivity.this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Invalid username or password", Toast.LENGTH_SHORT).show();
             }
         });
     }

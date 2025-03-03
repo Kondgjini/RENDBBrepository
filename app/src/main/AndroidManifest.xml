@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.rendbb">
 
@@ -9,15 +10,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.RENDBB">
 
-        <activity android:name=".views.AddPropertyActivity" />
-        <activity android:name=".views.ManageBookingsActivity" />
-        <activity android:name=".views.LoginActivity" />
-        <activity android:name=".views.RegisterActivity" android:exported="true"/>
-        <activity android:name=".views.ManagerDashboardActivity" />
-        <activity android:name=".views.PropertyManagementActivity" />
-        <activity
-            android:name=".views.PropertyDetailsActivity"
-            android:exported="true" />
         <activity
             android:name=".views.MainActivity"
             android:exported="true">
@@ -26,14 +18,47 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".views.EditPropertyActivity"
-            android:label="Edit Property"
-            android:parentActivityName=".views.PropertyDetailsActivity"/>
-        <activity android:name=".views.AddBookingActivity"
-            android:label="Add Booking"
-            android:parentActivityName=".views.PropertyDetailsActivity"/>
-        <activity android:name=".views.PreferencesActivity" />
-        <receiver android:name=".receivers.StatusNotificationReceiver" />
 
+        <activity
+            android:name=".views.LoginActivity"
+            android:label="Login"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".views.RegisterActivity"
+            android:label="Register"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
+            android:name=".views.ManagerDashboardActivity"
+            android:label="Dashboard" />
+
+        <activity
+            android:name=".views.AddPropertyActivity"
+            android:label="Add Property" />
+
+        <activity
+            android:name=".views.PropertyDetailsActivity"
+            android:label="Property Details" />
+
+        <activity
+            android:name=".views.EditPropertyActivity"
+            android:label="Edit Property" />
+
+        <activity
+            android:name=".views.ManageBookingsActivity"
+            android:label="Manage Bookings" />
+
+        <activity
+            android:name=".views.AddBookingActivity"
+            android:label="Add Booking" />
+
+        <activity
+            android:name=".views.PropertyManagementActivity"
+            android:label="Property Management" />
+
+        <activity
+            android:name=".views.PreferencesActivity"
+            android:label="Preferences" />
     </application>
 </manifest>
