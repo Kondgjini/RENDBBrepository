@@ -6,26 +6,26 @@
     android:padding="16dp">
 
     <EditText
-        android:id="@+id/propertyNameField"
+        android:id="@+id/nameEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Property Name" />
 
     <EditText
-        android:id="@+id/propertyLocationField"
+        android:id="@+id/locationEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Property Location" />
 
     <EditText
-        android:id="@+id/propertyDescriptionField"
+        android:id="@+id/descriptionEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Property Description" />
 
     <Button
-        android:id="@+id/savePropertyButton"
+        android:id="@+id/addButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Save Property" />
+        android:text="Add Property" />
 </LinearLayout>

@@ -6,14 +6,23 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.rendbb.R;
+import com.example.rendbb.adapters.PropertyAdapter;
+import com.example.rendbb.models.Property;
+import com.example.rendbb.utilities.DatabaseHelper;
+
+import java.util.List;
 
 public class ManagerDashboardActivity extends AppCompatActivity {
 
     private Button addPropertyButton, manageBookingsButton;
     private ImageButton preferencesGear;
     private RecyclerView propertiesRecyclerView;
+    private PropertyAdapter propertyAdapter;
+    private DatabaseHelper dbHelper;
+    private List<Property> propertyList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,6 +33,8 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         manageBookingsButton = findViewById(R.id.manageBookingsButton);
         preferencesGear = findViewById(R.id.preferencesGear);
         propertiesRecyclerView = findViewById(R.id.propertiesRecyclerView);
+
+        dbHelper = new DatabaseHelper(this);
 
         addPropertyButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -53,5 +64,13 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         });
 
         // Initialize RecyclerView (set adapter, layout manager, etc.)
+        propertiesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+        // Fetch properties from the database
+        propertyList = dbHelper.getAllProperties();
+
+        // Set up the adapter with the property list
+        propertyAdapter = new PropertyAdapter(this, propertyList);
+        propertiesRecyclerView.setAdapter(propertyAdapter);
     }
 }
