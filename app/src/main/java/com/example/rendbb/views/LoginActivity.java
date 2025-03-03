@@ -1,9 +1,10 @@
 package com.example.rendbb.views;
 
 import android.content.Intent;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -12,6 +13,7 @@ import com.example.rendbb.R;
 import com.example.rendbb.utilities.DatabaseHelper;
 
 public class LoginActivity extends AppCompatActivity {
+    private static final String TAG = "LoginActivity";
 
     private EditText txtUsername, txtPassword;
     private Button buttonLogin;
@@ -21,61 +23,117 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
+        try {
+            setContentView(R.layout.activity_login);
 
-        txtUsername = findViewById(R.id.username);
-        txtPassword = findViewById(R.id.password);
-        buttonLogin = findViewById(R.id.login_button);
+            // Initialize views
+            txtUsername = findViewById(R.id.username);
+            txtPassword = findViewById(R.id.password);
+            buttonLogin = findViewById(R.id.login_button);
 
-        dbHelper = new DatabaseHelper(this);
-        session = new SessionManager(getApplicationContext());
+            // Initialize database helper and session manager
+            dbHelper = new DatabaseHelper(this);
+            session = new SessionManager(getApplicationContext());
 
-        // Check if user is already logged in
-        if (session.isLoggedIn()) {
-            startActivity(new Intent(this, ManagerDashboardActivity.class));
+            // Check if user is already logged in
+            if (session.isLoggedIn()) {
+                navigateToDashboard();
+                return;
+            }
+
+            buttonLogin.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    try {
+                        attemptLogin();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error during login attempt", e);
+                        Toast.makeText(LoginActivity.this,
+                                "An error occurred during login",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error in onCreate", e);
+            Toast.makeText(this,
+                    "Error initializing application",
+                    Toast.LENGTH_LONG).show();
             finish();
-            return;
+        }
+    }
+
+    private void attemptLogin() {
+        // Reset errors
+        txtUsername.setError(null);
+        txtPassword.setError(null);
+
+        // Get values
+        String username = txtUsername.getText().toString().trim();
+        String password = txtPassword.getText().toString().trim();
+
+        // Validate
+        boolean cancel = false;
+        View focusView = null;
+
+        if (TextUtils.isEmpty(password)) {
+            txtPassword.setError("Password is required");
+            focusView = txtPassword;
+            cancel = true;
         }
 
-        buttonLogin.setOnClickListener(v -> {
-            String username = txtUsername.getText().toString().trim();
-            String password = txtPassword.getText().toString().trim();
+        if (TextUtils.isEmpty(username)) {
+            txtUsername.setError("Username is required");
+            focusView = txtUsername;
+            cancel = true;
+        }
 
-            // Validate inputs
-            if (TextUtils.isEmpty(username)) {
-                txtUsername.setError("Username is required");
-                txtUsername.requestFocus();
-                return;
-            }
+        if (cancel) {
+            focusView.requestFocus();
+        } else {
+            performLogin(username, password);
+        }
+    }
 
-            if (TextUtils.isEmpty(password)) {
-                txtPassword.setError("Password is required");
-                txtPassword.requestFocus();
-                return;
-            }
+    private void performLogin(String username, String password) {
+        try {
+            Log.d(TAG, "Attempting login for user: " + username);
 
             if (dbHelper.authenticateUser(username, password)) {
-                // Get user details
-                Cursor cursor = dbHelper.getUserDetails(username);
-                if (cursor.moveToFirst()) {
-                    String id = cursor.getString(cursor.getColumnIndex("id"));
-                    String email = cursor.getString(cursor.getColumnIndex("email"));
+                Log.d(TAG, "Login successful for user: " + username);
 
-                    // Create login session
-                    session.createLoginSession(id, username, email);
-
-                    // Update last login time
-                    dbHelper.updateLastLogin(username);
-                }
-                cursor.close();
+                // Create login session
+                session.createLoginSession(username);
 
                 // Navigate to dashboard
-                Intent intent = new Intent(LoginActivity.this, ManagerDashboardActivity.class);
-                startActivity(intent);
-                finish();
+                navigateToDashboard();
             } else {
-                Toast.makeText(this, "Invalid username or password", Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "Login failed for user: " + username);
+                Toast.makeText(this,
+                        "Invalid username or password",
+                        Toast.LENGTH_SHORT).show();
             }
-        });
+        } catch (Exception e) {
+            Log.e(TAG, "Error during login", e);
+            Toast.makeText(this,
+                    "An error occurred during login",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void navigateToDashboard() {
+        Intent intent = new Intent(LoginActivity.this, ManagerDashboardActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+        finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (dbHelper != null) {
+            dbHelper.close();
+        }
     }
 }

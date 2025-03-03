@@ -5,9 +5,10 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
-
+    private static final String TAG = "DatabaseHelper";
     public static final String DATABASE_NAME = "rendbb.db";
     public static final int DATABASE_VERSION = 1;
 
@@ -29,46 +30,49 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // Create Users table with last_login column
-        String CREATE_USERS_TABLE = "CREATE TABLE " + TABLE_USERS + "("
-                + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + KEY_USERNAME + " TEXT UNIQUE NOT NULL,"
-                + KEY_PASSWORD + " TEXT NOT NULL,"
-                + KEY_EMAIL + " TEXT NOT NULL,"
-                + "last_login DATETIME"
-                + ")";
-        db.execSQL(CREATE_USERS_TABLE);
+        try {
+            Log.d(TAG, "Creating database tables");
 
-        // Create Properties table
-        String CREATE_PROPERTIES_TABLE = "CREATE TABLE " + TABLE_PROPERTIES + "("
-                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + "name TEXT NOT NULL,"
-                + "location TEXT NOT NULL,"
-                + "description TEXT,"
-                + "status TEXT NOT NULL DEFAULT 'available',"
-                + "manager_id INTEGER NOT NULL,"
-                + "price_per_night REAL NOT NULL,"
-                + "max_occupants INTEGER NOT NULL,"
-                + "FOREIGN KEY(manager_id) REFERENCES " + TABLE_USERS + "(id)"
-                + ")";
-        db.execSQL(CREATE_PROPERTIES_TABLE);
+            // Create Users table
+            String CREATE_USERS_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_USERS + "("
+                    + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + KEY_USERNAME + " TEXT UNIQUE NOT NULL,"
+                    + KEY_PASSWORD + " TEXT NOT NULL,"
+                    + KEY_EMAIL + " TEXT NOT NULL"
+                    + ")";
+            db.execSQL(CREATE_USERS_TABLE);
 
-        // Create Bookings table
-        String CREATE_BOOKINGS_TABLE = "CREATE TABLE " + TABLE_BOOKINGS + "("
-                + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + "property_id INTEGER NOT NULL,"
-                + "guest_name TEXT NOT NULL,"
-                + "check_in_date DATE NOT NULL,"
-                + "check_out_date DATE NOT NULL,"
-                + "total_price REAL NOT NULL,"
-                + "status TEXT NOT NULL DEFAULT 'pending',"
-                + "notes TEXT,"
-                + "FOREIGN KEY(property_id) REFERENCES " + TABLE_PROPERTIES + "(id)"
-                + ")";
-        db.execSQL(CREATE_BOOKINGS_TABLE);
+            // Create Properties table
+            String CREATE_PROPERTIES_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_PROPERTIES + "("
+                    + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "name TEXT NOT NULL,"
+                    + "location TEXT NOT NULL,"
+                    + "description TEXT,"
+                    + KEY_STATUS + " TEXT NOT NULL DEFAULT 'available',"
+                    + "manager_id INTEGER NOT NULL,"
+                    + "price_per_night REAL NOT NULL,"
+                    + "max_occupants INTEGER NOT NULL"
+                    + ")";
+            db.execSQL(CREATE_PROPERTIES_TABLE);
 
-        // Insert a default admin user
-        insertDefaultAdmin(db);
+            // Create Bookings table
+            String CREATE_BOOKINGS_TABLE = "CREATE TABLE IF NOT EXISTS " + TABLE_BOOKINGS + "("
+                    + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
+                    + "property_id INTEGER NOT NULL,"
+                    + "guest_name TEXT NOT NULL,"
+                    + "check_in_date DATE NOT NULL,"
+                    + "check_out_date DATE NOT NULL,"
+                    + "total_price REAL NOT NULL,"
+                    + KEY_STATUS + " TEXT NOT NULL DEFAULT 'pending',"
+                    + "notes TEXT"
+                    + ")";
+            db.execSQL(CREATE_BOOKINGS_TABLE);
+
+            Log.d(TAG, "Database tables created successfully");
+
+        } catch (Exception e) {
+            Log.e(TAG, "Error creating database", e);
+        }
     }
 
     @Override
@@ -79,56 +83,76 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    private void insertDefaultAdmin(SQLiteDatabase db) {
-        ContentValues values = new ContentValues();
-        values.put(KEY_USERNAME, "admin");
-        values.put(KEY_PASSWORD, "admin123"); // In production, use proper password hashing
-        values.put(KEY_EMAIL, "admin@rendbb.com");
-        db.insert(TABLE_USERS, null, values);
-    }
-
     // Add the missing getPropertyStatus method
     public String getPropertyStatus(int id) {
         SQLiteDatabase db = this.getReadableDatabase();
         String status = "unknown";
 
-        String[] columns = { KEY_STATUS };
-        String selection = KEY_ID + "=?";
-        String[] selectionArgs = { String.valueOf(id) };
-
         try {
+            String[] columns = { KEY_STATUS };
+            String selection = KEY_ID + "=?";
+            String[] selectionArgs = { String.valueOf(id) };
+
             Cursor cursor = db.query(TABLE_PROPERTIES, columns, selection, selectionArgs, null, null, null);
-            if (cursor.moveToFirst()) {
-                status = cursor.getString(cursor.getColumnIndex(KEY_STATUS));
+
+            if (cursor != null && cursor.moveToFirst()) {
+                int statusIndex = cursor.getColumnIndex(KEY_STATUS);
+                if (statusIndex != -1) {
+                    status = cursor.getString(statusIndex);
+                }
+                cursor.close();
             }
-            cursor.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "Error getting property status", e);
         }
 
         return status;
     }
 
-    // Method to update property status
+    // Add the missing updatePropertyStatus method
     public int updatePropertyStatus(int id, String status) {
         SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put(KEY_STATUS, status);
-        return db.update(TABLE_PROPERTIES, values, KEY_ID + "=?", new String[]{String.valueOf(id)});
+        int result = 0;
+
+        try {
+            ContentValues values = new ContentValues();
+            values.put(KEY_STATUS, status);
+
+            result = db.update(TABLE_PROPERTIES,
+                    values,
+                    KEY_ID + "=?",
+                    new String[]{String.valueOf(id)});
+
+            Log.d(TAG, "Property status updated. Result: " + result);
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating property status", e);
+        }
+
+        return result;
     }
 
-    // Add the existing authentication methods
+    // Existing authentication methods
     public boolean authenticateUser(String username, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
-        String[] columns = { KEY_ID };
-        String selection = KEY_USERNAME + "=? AND " + KEY_PASSWORD + "=?";
-        String[] selectionArgs = { username, password };
+        boolean result = false;
+        Cursor cursor = null;
 
-        Cursor cursor = db.query(TABLE_USERS, columns, selection, selectionArgs, null, null, null);
-        int count = cursor.getCount();
-        cursor.close();
+        try {
+            String[] columns = { KEY_ID };
+            String selection = KEY_USERNAME + "=? AND " + KEY_PASSWORD + "=?";
+            String[] selectionArgs = { username, password };
 
-        return count > 0;
+            cursor = db.query(TABLE_USERS, columns, selection, selectionArgs, null, null, null);
+            result = (cursor != null && cursor.getCount() > 0);
+        } catch (Exception e) {
+            Log.e(TAG, "Error during authentication", e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        return result;
     }
 
     public Cursor getUserDetails(String username) {
@@ -140,18 +164,18 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return db.query(TABLE_USERS, columns, selection, selectionArgs, null, null, null);
     }
 
-    public void updateLastLogin(String username) {
+    public long addUser(String username, String password, String email) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put("last_login", getCurrentDateTime());
+        values.put(KEY_USERNAME, username);
+        values.put(KEY_PASSWORD, password);
+        values.put(KEY_EMAIL, email);
 
-        String whereClause = KEY_USERNAME + "=?";
-        String[] whereArgs = { username };
-
-        db.update(TABLE_USERS, values, whereClause, whereArgs);
-    }
-
-    private String getCurrentDateTime() {
-        return java.text.DateFormat.getDateTimeInstance().format(new java.util.Date());
+        try {
+            return db.insertOrThrow(TABLE_USERS, null, values);
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding user", e);
+            return -1;
+        }
     }
 }
