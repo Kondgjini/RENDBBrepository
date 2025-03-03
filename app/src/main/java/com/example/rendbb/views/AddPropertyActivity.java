@@ -41,7 +41,7 @@ public class AddPropertyActivity extends AppCompatActivity {
                 }
 
                 // Example: using a fixed manager ID (update as needed)
-                Property property = new Property(name, location, description, "free"); // Default status as "free"
+                Property property = new Property(name, location, description, 1); // Default status as "free"
                 long result = propertyManager.addProperty(property);
                 if (result != -1) {
                     Toast.makeText(AddPropertyActivity.this, "Property added successfully!", Toast.LENGTH_SHORT).show();

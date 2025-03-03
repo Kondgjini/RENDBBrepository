@@ -46,12 +46,12 @@ public class PropertyManager {
         Cursor cursor = db.rawQuery("SELECT * FROM " + DatabaseHelper.TABLE_PROPERTIES, null);
         if (cursor.moveToFirst()) {
             do {
-                Property property = new Property();
-                property.setId(cursor.getInt(cursor.getColumnIndex("id")));
-                property.setName(cursor.getString(cursor.getColumnIndex("name")));
-                property.setLocation(cursor.getString(cursor.getColumnIndex("location")));
-                property.setDescription(cursor.getString(cursor.getColumnIndex("description")));
-                property.setStatus(cursor.getString(cursor.getColumnIndex("status")));
+                Property property = new Property(
+                        cursor.getString(cursor.getColumnIndex("name")),
+                        cursor.getString(cursor.getColumnIndex("location")),
+                        cursor.getString(cursor.getColumnIndex("description")),
+                        cursor.getInt(cursor.getColumnIndex("manager_id"))
+                );
                 propertyList.add(property);
             } while (cursor.moveToNext());
         }
