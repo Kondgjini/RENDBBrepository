@@ -67,14 +67,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_PROPERTIES, null);
 
+        int idIndex = cursor.getColumnIndex("id");
+        int nameIndex = cursor.getColumnIndex("name");
+        int locationIndex = cursor.getColumnIndex("location");
+        int descriptionIndex = cursor.getColumnIndex("description");
+        int statusIndex = cursor.getColumnIndex("status");
+
+        if (idIndex < 0 || nameIndex < 0 || locationIndex < 0 || descriptionIndex < 0 || statusIndex < 0) {
+            cursor.close();
+            return propertyList; // Return empty list if columns are missing
+        }
+
         if (cursor.moveToFirst()) {
             do {
                 Property property = new Property();
-                property.setId(cursor.getInt(cursor.getColumnIndex("id")));
-                property.setName(cursor.getString(cursor.getColumnIndex("name")));
-                property.setLocation(cursor.getString(cursor.getColumnIndex("location")));
-                property.setDescription(cursor.getString(cursor.getColumnIndex("description")));
-                property.setStatus(cursor.getString(cursor.getColumnIndex("status")));
+                property.setId(cursor.getInt(idIndex));
+                property.setName(cursor.getString(nameIndex));
+                property.setLocation(cursor.getString(locationIndex));
+                property.setDescription(cursor.getString(descriptionIndex));
+                property.setStatus(cursor.getString(statusIndex));
                 propertyList.add(property);
             } while (cursor.moveToNext());
         }

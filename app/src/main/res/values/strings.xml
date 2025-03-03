@@ -1,7 +1,14 @@
 <resources>
     <string name="app_name">RENDBB</string>
+    <string name="property_name">Property Name</string>
+    <string name="property_location">Property Location</string>
+    <string name="property_description">Property Description</string>
     <string name="add_property">Add Property</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="register">Register</string>
+    <string name="login">Login</string>
     <string name="manage_bookings">Manage Bookings</string>
     <string name="preferences">Preferences</string>
-    <!-- Add other string resources here -->
 </resources>
