@@ -1,68 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:layout_height="match_parent">
 
-    <!-- Property details header -->
-    <TextView
-        android:id="@+id/propertyDetailsText"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Property Details"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="16dp" />
-
-    <!-- Custom calendar displayed via a GridView -->
-    <GridView
-        android:id="@+id/calendarGridView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:numColumns="7"
-        android:verticalSpacing="4dp"
-        android:horizontalSpacing="4dp"
-        android:padding="4dp"
-        android:layout_marginBottom="16dp" />
-
-    <!-- Booking controls container (placed at the bottom) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <!-- TextView to display the selected booking period -->
         <TextView
-            android:id="@+id/bookingPeriodText"
+            android:id="@+id/propertyNameTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Selected booking period will appear here"
-            android:layout_marginBottom="16dp" />
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
 
-        <!-- Button to select the start date -->
-        <Button
-            android:id="@+id/selectStartDateButton"
+        <TextView
+            android:id="@+id/propertyLocationTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select Start Date"
-            android:layout_marginBottom="8dp" />
+            android:textSize="18sp"
+            android:layout_marginBottom="16dp"/>
 
-        <!-- Button to select the end date -->
-        <Button
-            android:id="@+id/selectEndDateButton"
-            android:layout_width="match_parent"
+        <TextView
+            android:id="@+id/propertyStatusTextView"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Select End Date"
-            android:layout_marginBottom="8dp" />
+            android:textSize="16sp"
+            android:padding="8dp"
+            android:background="@drawable/status_background"
+            android:layout_marginBottom="16dp"/>
 
-        <!-- Button to confirm booking -->
-        <Button
-            android:id="@+id/bookNowButton"
+        <TextView
+            android:id="@+id/propertyPriceTextView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Book Now"/>
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/propertyOccupantsTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:id="@+id/propertyDescriptionTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:layout_marginBottom="24dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Availability Calendar"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <GridView
+            android:id="@+id/calendarGridView"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:numColumns="7"
+            android:horizontalSpacing="2dp"
+            android:verticalSpacing="2dp"
+            android:layout_marginBottom="24dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_horizontal">
+
+            <Button
+                android:id="@+id/editButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Edit Property"
+                android:layout_marginEnd="16dp"/>
+
+            <Button
+                android:id="@+id/bookButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Book Now"/>
+        </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</ScrollView>

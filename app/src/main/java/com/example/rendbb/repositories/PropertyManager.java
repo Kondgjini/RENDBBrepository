@@ -11,9 +11,10 @@ import java.util.List;
 
 public class PropertyManager {
     private SQLiteDatabase db;
+    private DatabaseHelper dbHelper;
 
     public PropertyManager(Context context) {
-        DatabaseHelper dbHelper = new DatabaseHelper(context);
+        dbHelper = new DatabaseHelper(context);
         db = dbHelper.getWritableDatabase();
     }
 
@@ -27,13 +28,41 @@ public class PropertyManager {
             String name = cursor.getString(cursor.getColumnIndex("name"));
             String location = cursor.getString(cursor.getColumnIndex("location"));
             String description = cursor.getString(cursor.getColumnIndex("description"));
-            String status = "available"; // Default status, can be updated based on bookings
+            int managerId = cursor.getInt(cursor.getColumnIndex("manager_id"));
+            double price = cursor.getDouble(cursor.getColumnIndex("price_per_night"));
+            int maxOccupants = cursor.getInt(cursor.getColumnIndex("max_occupants"));
+            String status = dbHelper.getPropertyStatus(id);
 
-            properties.add(new PropertyItem(id, name, location, description, status));
+            properties.add(new PropertyItem(id, name, location, description,
+                    status, managerId, price, maxOccupants));
         }
         cursor.close();
         return properties;
     }
 
-    // ... other existing methods ...
+    public long addProperty(PropertyItem property) {
+        ContentValues values = new ContentValues();
+        values.put("name", property.getName());
+        values.put("location", property.getLocation());
+        values.put("description", property.getDescription());
+        values.put("manager_id", property.getManagerId());
+        values.put("price_per_night", property.getPricePerNight());
+        values.put("max_occupants", property.getMaxOccupants());
+        values.put("status", property.getStatus());
+
+        return db.insert(DatabaseHelper.TABLE_PROPERTIES, null, values);
+    }
+
+    public int updateProperty(PropertyItem property) {
+        ContentValues values = new ContentValues();
+        values.put("name", property.getName());
+        values.put("location", property.getLocation());
+        values.put("description", property.getDescription());
+        values.put("price_per_night", property.getPricePerNight());
+        values.put("max_occupants", property.getMaxOccupants());
+        values.put("status", property.getStatus());
+
+        return db.update(DatabaseHelper.TABLE_PROPERTIES, values,
+                "id=?", new String[]{String.valueOf(property.getId())});
+    }
 }

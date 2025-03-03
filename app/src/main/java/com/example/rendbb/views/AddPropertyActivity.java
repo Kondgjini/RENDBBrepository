@@ -1,19 +1,26 @@
 package com.example.rendbb.views;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
+import android.text.TextUtils;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.rendbb.R;
-import com.example.rendbb.models.Property;
+import com.example.rendbb.models.PropertyItem;
 import com.example.rendbb.repositories.PropertyManager;
+import com.example.rendbb.utilities.DatabaseHelper;
 
 public class AddPropertyActivity extends AppCompatActivity {
-
-    private EditText propertyNameField, propertyLocationField, propertyDescriptionField;
-    private Button savePropertyButton;
+    private EditText nameEditText;
+    private EditText locationEditText;
+    private EditText descriptionEditText;
+    private EditText priceEditText;
+    private EditText maxOccupantsEditText;
+    private Button saveButton;
+    private Button cancelButton;
     private PropertyManager propertyManager;
 
     @Override
@@ -21,35 +28,111 @@ public class AddPropertyActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_property);
 
-        propertyNameField = findViewById(R.id.propertyNameField);
-        propertyLocationField = findViewById(R.id.propertyLocationField);
-        propertyDescriptionField = findViewById(R.id.propertyDescriptionField);
-        savePropertyButton = findViewById(R.id.savePropertyButton);
+        // Enable back button in action bar
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle("Add New Property");
 
+        // Initialize views
+        initializeViews();
+
+        // Initialize property manager
         propertyManager = new PropertyManager(this);
 
-        savePropertyButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String name = propertyNameField.getText().toString().trim();
-                String location = propertyLocationField.getText().toString().trim();
-                String description = propertyDescriptionField.getText().toString().trim();
+        // Setup button listeners
+        setupClickListeners();
+    }
 
-                if (name.isEmpty() || location.isEmpty()) {
-                    Toast.makeText(AddPropertyActivity.this, "Name and location are required!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+    private void initializeViews() {
+        nameEditText = findViewById(R.id.nameEditText);
+        locationEditText = findViewById(R.id.locationEditText);
+        descriptionEditText = findViewById(R.id.descriptionEditText);
+        priceEditText = findViewById(R.id.priceEditText);
+        maxOccupantsEditText = findViewById(R.id.maxOccupantsEditText);
+        saveButton = findViewById(R.id.saveButton);
+        cancelButton = findViewById(R.id.cancelButton);
+    }
 
-                // Example: using a fixed manager ID (update as needed)
-                Property property = new Property(name, location, description, 1); // Default status as "free"
-                long result = propertyManager.addProperty(property);
-                if (result != -1) {
-                    Toast.makeText(AddPropertyActivity.this, "Property added successfully!", Toast.LENGTH_SHORT).show();
-                    finish(); // Return to previous screen (dashboard)
-                } else {
-                    Toast.makeText(AddPropertyActivity.this, "Failed to add property.", Toast.LENGTH_SHORT).show();
-                }
+    private void setupClickListeners() {
+        saveButton.setOnClickListener(v -> saveProperty());
+        cancelButton.setOnClickListener(v -> finish());
+    }
+
+    private void saveProperty() {
+        // Validate input fields
+        if (!validateInputs()) {
+            return;
+        }
+
+        try {
+            // Create new property
+            PropertyItem property = new PropertyItem(
+                    0, // id will be set by database
+                    nameEditText.getText().toString().trim(),
+                    locationEditText.getText().toString().trim(),
+                    descriptionEditText.getText().toString().trim(),
+                    "available", // default status
+                    getCurrentUserId(),
+                    Double.parseDouble(priceEditText.getText().toString().trim()),
+                    Integer.parseInt(maxOccupantsEditText.getText().toString().trim())
+            );
+
+            // Save property to database
+            long result = propertyManager.addProperty(property);
+
+            if (result != -1) {
+                Toast.makeText(this, "Property added successfully", Toast.LENGTH_SHORT).show();
+                // Return to dashboard
+                Intent intent = new Intent(this, ManagerDashboardActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                finish();
+            } else {
+                Toast.makeText(this, "Error adding property", Toast.LENGTH_SHORT).show();
             }
-        });
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "Please enter valid numbers for price and occupants",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private boolean validateInputs() {
+        boolean isValid = true;
+
+        if (TextUtils.isEmpty(nameEditText.getText())) {
+            nameEditText.setError("Property name is required");
+            isValid = false;
+        }
+
+        if (TextUtils.isEmpty(locationEditText.getText())) {
+            locationEditText.setError("Location is required");
+            isValid = false;
+        }
+
+        if (TextUtils.isEmpty(priceEditText.getText())) {
+            priceEditText.setError("Price is required");
+            isValid = false;
+        }
+
+        if (TextUtils.isEmpty(maxOccupantsEditText.getText())) {
+            maxOccupantsEditText.setError("Maximum occupants is required");
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    private int getCurrentUserId() {
+        // TODO: Implement proper user management
+        // For now, return a default manager ID
+        return 1;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            onBackPressed();
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
     }
 }
