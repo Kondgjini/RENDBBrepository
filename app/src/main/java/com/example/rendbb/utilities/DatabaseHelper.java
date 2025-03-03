@@ -5,6 +5,11 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.example.rendbb.models.Property;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class DatabaseHelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "rendbb.db";
@@ -56,7 +61,28 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    // Add this method to allow user authentication
+    // Add method to fetch all properties
+    public List<Property> getAllProperties() {
+        List<Property> propertyList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_PROPERTIES, null);
+
+        if (cursor.moveToFirst()) {
+            do {
+                Property property = new Property();
+                property.setId(cursor.getInt(cursor.getColumnIndex("id")));
+                property.setName(cursor.getString(cursor.getColumnIndex("name")));
+                property.setLocation(cursor.getString(cursor.getColumnIndex("location")));
+                property.setDescription(cursor.getString(cursor.getColumnIndex("description")));
+                property.setStatus(cursor.getString(cursor.getColumnIndex("status")));
+                propertyList.add(property);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return propertyList;
+    }
+
+    // Add method to authenticate user
     public boolean authenticateUser(String username, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM " + TABLE_USERS + " WHERE username=? AND password=?";
