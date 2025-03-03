@@ -39,22 +39,19 @@ public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.Proper
         Property property = properties.get(position);
         holder.propertyName.setText(property.getName());
         holder.propertyAddress.setText(property.getLocation());
+        // For demonstration, we use the description field to show additional info.
         holder.propertyStatus.setText(property.getDescription());
 
         // Set traffic-light indicator based on property status
-        switch (property.getStatus().toLowerCase()) {
-            case "free":
-                holder.statusIndicator.setImageResource(R.drawable.status_green);
-                break;
-            case "nearly":
-                holder.statusIndicator.setImageResource(R.drawable.status_yellow);
-                break;
-            case "occupied":
-                holder.statusIndicator.setImageResource(R.drawable.status_red);
-                break;
-            default:
-                holder.statusIndicator.setImageResource(R.drawable.status_green);
-                break;
+        if (property.getStatus().equalsIgnoreCase("free")) {
+            holder.statusIndicator.setImageResource(R.drawable.status_green);
+        } else if (property.getStatus().equalsIgnoreCase("nearly")) {
+            holder.statusIndicator.setImageResource(R.drawable.status_yellow);
+        } else if (property.getStatus().equalsIgnoreCase("occupied")) {
+            holder.statusIndicator.setImageResource(R.drawable.status_red);
+        } else {
+            // Default to green if unknown
+            holder.statusIndicator.setImageResource(R.drawable.status_green);
         }
 
         // Set the click listener to open PropertyDetailsActivity

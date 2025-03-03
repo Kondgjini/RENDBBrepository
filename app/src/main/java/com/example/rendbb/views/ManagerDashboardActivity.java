@@ -11,7 +11,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.rendbb.R;
 import com.example.rendbb.adapters.PropertyAdapter;
 import com.example.rendbb.models.Property;
-import com.example.rendbb.utilities.DatabaseHelper;
+import com.example.rendbb.repositories.PropertyManager;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public class ManagerDashboardActivity extends AppCompatActivity {
     private ImageButton preferencesGear;
     private RecyclerView propertiesRecyclerView;
     private PropertyAdapter propertyAdapter;
-    private DatabaseHelper dbHelper;
+    private PropertyManager propertyManager;
     private List<Property> propertyList;
 
     @Override
@@ -34,7 +34,7 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         preferencesGear = findViewById(R.id.preferencesGear);
         propertiesRecyclerView = findViewById(R.id.propertiesRecyclerView);
 
-        dbHelper = new DatabaseHelper(this);
+        propertyManager = new PropertyManager(this);
 
         addPropertyButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -67,10 +67,19 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         propertiesRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         // Fetch properties from the database
-        propertyList = dbHelper.getAllProperties();
+        propertyList = propertyManager.getAllProperties();
 
         // Set up the adapter with the property list
         propertyAdapter = new PropertyAdapter(this, propertyList);
         propertiesRecyclerView.setAdapter(propertyAdapter);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh the property list when returning to this activity
+        propertyList.clear();
+        propertyList.addAll(propertyManager.getAllProperties());
+        propertyAdapter.notifyDataSetChanged();
     }
 }
