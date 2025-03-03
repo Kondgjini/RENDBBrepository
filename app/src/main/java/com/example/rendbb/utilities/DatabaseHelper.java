@@ -40,6 +40,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                 "name TEXT NOT NULL, " +
                 "location TEXT NOT NULL, " +
                 "description TEXT, " +
+                "status TEXT, " +
                 "manager_id INTEGER" +
                 ");");
 
@@ -61,39 +62,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    // Add method to fetch all properties
-    public List<Property> getAllProperties() {
-        List<Property> propertyList = new ArrayList<>();
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_PROPERTIES, null);
-
-        int idIndex = cursor.getColumnIndex("id");
-        int nameIndex = cursor.getColumnIndex("name");
-        int locationIndex = cursor.getColumnIndex("location");
-        int descriptionIndex = cursor.getColumnIndex("description");
-        int statusIndex = cursor.getColumnIndex("status");
-
-        if (idIndex < 0 || nameIndex < 0 || locationIndex < 0 || descriptionIndex < 0 || statusIndex < 0) {
-            cursor.close();
-            return propertyList; // Return empty list if columns are missing
-        }
-
-        if (cursor.moveToFirst()) {
-            do {
-                Property property = new Property();
-                property.setId(cursor.getInt(idIndex));
-                property.setName(cursor.getString(nameIndex));
-                property.setLocation(cursor.getString(locationIndex));
-                property.setDescription(cursor.getString(descriptionIndex));
-                property.setStatus(cursor.getString(statusIndex));
-                propertyList.add(property);
-            } while (cursor.moveToNext());
-        }
-        cursor.close();
-        return propertyList;
-    }
-
-    // Add method to authenticate user
+    // Add this method to allow user authentication
     public boolean authenticateUser(String username, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
         String query = "SELECT * FROM " + TABLE_USERS + " WHERE username=? AND password=?";
@@ -101,5 +70,32 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         boolean result = (cursor.getCount() > 0);
         cursor.close();
         return result;
+    }
+
+    public List<Property> getAllProperties() {
+        List<Property> propertyList = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_PROPERTIES, null);
+        if (cursor.moveToFirst()) {
+            int idIndex = cursor.getColumnIndex("id");
+            int nameIndex = cursor.getColumnIndex("name");
+            int locationIndex = cursor.getColumnIndex("location");
+            int descriptionIndex = cursor.getColumnIndex("description");
+            int statusIndex = cursor.getColumnIndex("status");
+            int managerIdIndex = cursor.getColumnIndex("manager_id");
+
+            do {
+                Property property = new Property();
+                property.setId(cursor.getInt(idIndex));
+                property.setName(cursor.getString(nameIndex));
+                property.setLocation(cursor.getString(locationIndex));
+                property.setDescription(cursor.getString(descriptionIndex));
+                property.setStatus(cursor.getString(statusIndex));
+                property.setManagerId(cursor.getInt(managerIdIndex));
+                propertyList.add(property);
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+        return propertyList;
     }
 }
