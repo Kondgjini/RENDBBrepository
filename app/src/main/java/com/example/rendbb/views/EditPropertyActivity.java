@@ -10,6 +10,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.rendbb.R;
 import com.example.rendbb.models.PropertyItem;
 import com.example.rendbb.repositories.PropertyManager;
+import java.util.List;
+import java.util.ArrayList;
 
 public class EditPropertyActivity extends AppCompatActivity {
     private EditText nameEditText;
@@ -80,6 +82,9 @@ public class EditPropertyActivity extends AppCompatActivity {
             descriptionEditText.setText(currentProperty.getDescription());
             priceEditText.setText(String.valueOf(currentProperty.getPricePerNight()));
             maxOccupantsEditText.setText(String.valueOf(currentProperty.getMaxOccupants()));
+        } else {
+            Toast.makeText(this, "Property not found", Toast.LENGTH_SHORT).show();
+            finish();
         }
     }
 
@@ -134,11 +139,33 @@ public class EditPropertyActivity extends AppCompatActivity {
         if (TextUtils.isEmpty(priceEditText.getText())) {
             priceEditText.setError("Price is required");
             isValid = false;
+        } else {
+            try {
+                double price = Double.parseDouble(priceEditText.getText().toString().trim());
+                if (price <= 0) {
+                    priceEditText.setError("Price must be greater than 0");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                priceEditText.setError("Invalid price format");
+                isValid = false;
+            }
         }
 
         if (TextUtils.isEmpty(maxOccupantsEditText.getText())) {
             maxOccupantsEditText.setError("Maximum occupants is required");
             isValid = false;
+        } else {
+            try {
+                int maxOccupants = Integer.parseInt(maxOccupantsEditText.getText().toString().trim());
+                if (maxOccupants <= 0) {
+                    maxOccupantsEditText.setError("Maximum occupants must be greater than 0");
+                    isValid = false;
+                }
+            } catch (NumberFormatException e) {
+                maxOccupantsEditText.setError("Invalid number format");
+                isValid = false;
+            }
         }
 
         return isValid;
@@ -151,5 +178,30 @@ public class EditPropertyActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onBackPressed() {
+        // Show confirmation dialog if changes were made
+        if (hasUnsavedChanges()) {
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Discard Changes")
+                    .setMessage("You have unsaved changes. Are you sure you want to discard them?")
+                    .setPositiveButton("Discard", (dialog, which) -> super.onBackPressed())
+                    .setNegativeButton("Keep Editing", null)
+                    .show();
+        } else {
+            super.onBackPressed();
+        }
+    }
+
+    private boolean hasUnsavedChanges() {
+        if (currentProperty == null) return false;
+
+        return !currentProperty.getName().equals(nameEditText.getText().toString().trim()) ||
+                !currentProperty.getLocation().equals(locationEditText.getText().toString().trim()) ||
+                !currentProperty.getDescription().equals(descriptionEditText.getText().toString().trim()) ||
+                currentProperty.getPricePerNight() != Double.parseDouble(priceEditText.getText().toString().trim()) ||
+                currentProperty.getMaxOccupants() != Integer.parseInt(maxOccupantsEditText.getText().toString().trim());
     }
 }
