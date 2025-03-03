@@ -1,88 +1,98 @@
 package com.example.rendbb.adapters;
 
-import android.content.Context;
-import android.content.Intent;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
-
-import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.rendbb.R;
-import com.example.rendbb.models.Property;
-import com.example.rendbb.views.PropertyDetailsActivity;
-
+import com.example.rendbb.models.PropertyItem;
 import java.util.List;
 
-public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.PropertyViewHolder> {
+public class PropertyAdapter extends RecyclerView.Adapter<PropertyAdapter.ViewHolder> {
+    private List<PropertyItem> items;
+    private OnPropertyClickListener listener;
 
-    private Context context;
-    private List<Property> properties;
-
-    public PropertyAdapter(Context context, List<Property> properties) {
-        this.context = context;
-        this.properties = properties;
+    public interface OnPropertyClickListener {
+        void onPropertyClick(PropertyItem item);
     }
 
-    @NonNull
-    @Override
-    public PropertyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_property_card, parent, false);
-        return new PropertyViewHolder(view);
+    public PropertyAdapter(List<PropertyItem> items, OnPropertyClickListener listener) {
+        this.items = items;
+        this.listener = listener;
     }
 
     @Override
-    public void onBindViewHolder(@NonNull PropertyViewHolder holder, int position) {
-        Property property = properties.get(position);
-        holder.propertyName.setText(property.getName());
-        holder.propertyAddress.setText(property.getLocation());
-        // For demonstration, we use the description field to show additional info.
-        holder.propertyStatus.setText(property.getDescription());
+    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.property_item, parent, false);
+        return new ViewHolder(view);
+    }
 
-        // Set traffic-light indicator based on property status
-        if (property.getStatus().equalsIgnoreCase("free")) {
-            holder.statusIndicator.setImageResource(R.drawable.status_green);
-        } else if (property.getStatus().equalsIgnoreCase("nearly")) {
-            holder.statusIndicator.setImageResource(R.drawable.status_yellow);
-        } else if (property.getStatus().equalsIgnoreCase("occupied")) {
-            holder.statusIndicator.setImageResource(R.drawable.status_red);
-        } else {
-            // Default to green if unknown
-            holder.statusIndicator.setImageResource(R.drawable.status_green);
+    @Override
+    public void onBindViewHolder(ViewHolder holder, int position) {
+        PropertyItem item = items.get(position);
+        holder.nameText.setText(item.getName());
+        holder.locationText.setText(item.getLocation());
+        holder.statusText.setText(item.getStatus());
+
+        // Set status color
+        switch (item.getStatus().toLowerCase()) {
+            case "available":
+                holder.statusText.setTextColor(Color.GREEN);
+                break;
+            case "occupied":
+                holder.statusText.setTextColor(Color.RED);
+                break;
+            case "maintenance":
+                holder.statusText.setTextColor(Color.BLUE);
+                break;
+            default:
+                holder.statusText.setTextColor(Color.GRAY);
         }
 
-        // Set the click listener to open PropertyDetailsActivity
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(context, PropertyDetailsActivity.class);
-                intent.putExtra("name", property.getName());
-                intent.putExtra("location", property.getLocation());
-                intent.putExtra("description", property.getDescription());
-                intent.putExtra("status", property.getStatus());
-                context.startActivity(intent);
+        // Set price if available
+        if (item.getPricePerNight() > 0) {
+            holder.priceText.setText(String.format("$%.2f/night", item.getPricePerNight()));
+            holder.priceText.setVisibility(View.VISIBLE);
+        } else {
+            holder.priceText.setVisibility(View.GONE);
+        }
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onPropertyClick(item);
             }
         });
     }
 
     @Override
     public int getItemCount() {
-        return properties.size();
+        return items.size();
     }
 
-    public static class PropertyViewHolder extends RecyclerView.ViewHolder {
-        TextView propertyName, propertyAddress, propertyStatus;
-        ImageView statusIndicator;
+    public List<PropertyItem> getItems() {
+        return items;
+    }
 
-        public PropertyViewHolder(@NonNull View itemView) {
-            super(itemView);
-            propertyName = itemView.findViewById(R.id.propertyName);
-            propertyAddress = itemView.findViewById(R.id.propertyAddress);
-            propertyStatus = itemView.findViewById(R.id.propertyStatus);
-            statusIndicator = itemView.findViewById(R.id.statusIndicator);
+    public void updateItems(List<PropertyItem> newItems) {
+        this.items = newItems;
+        notifyDataSetChanged();
+    }
+
+    static class ViewHolder extends RecyclerView.ViewHolder {
+        TextView nameText;
+        TextView locationText;
+        TextView statusText;
+        TextView priceText;
+
+        ViewHolder(View view) {
+            super(view);
+            nameText = view.findViewById(R.id.property_name);
+            locationText = view.findViewById(R.id.property_location);
+            statusText = view.findViewById(R.id.property_status);
+            priceText = view.findViewById(R.id.property_price);
         }
     }
 }

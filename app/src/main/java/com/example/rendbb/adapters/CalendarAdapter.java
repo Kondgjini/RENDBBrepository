@@ -8,19 +8,21 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
 import com.example.rendbb.R;
+import com.example.rendbb.models.BookingInfo;
 import java.util.Calendar;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class CalendarAdapter extends BaseAdapter {
-
     private Context context;
     private Calendar calendar;
-    private List<Integer> bookedDays; // day numbers (1-31) that are booked
+    private Map<Integer, BookingInfo> bookings;
+    private int selectedDay = -1;
 
-    public CalendarAdapter(Context context, Calendar calendar, List<Integer> bookedDays) {
+    public CalendarAdapter(Context context, Calendar calendar) {
         this.context = context;
         this.calendar = calendar;
-        this.bookedDays = bookedDays;
+        this.bookings = new HashMap<>();
     }
 
     @Override
@@ -40,19 +42,83 @@ public class CalendarAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        // Inflate day_cell.xml layout for each cell
+        ViewHolder holder;
+
         if (convertView == null) {
-            convertView = LayoutInflater.from(context).inflate(R.layout.day_cell, parent, false);
-        }
-        TextView dayText = convertView.findViewById(R.id.dayText);
-        int day = position + 1;
-        dayText.setText(String.valueOf(day));
-        // Highlight booked days with a yellow background
-        if (bookedDays.contains(day)) {
-            dayText.setBackgroundColor(Color.YELLOW);
+            convertView = LayoutInflater.from(context).inflate(R.layout.calendar_day_cell, parent, false);
+            holder = new ViewHolder();
+            holder.dayText = convertView.findViewById(R.id.dayText);
+            holder.indicatorView = convertView.findViewById(R.id.bookingIndicator);
+            convertView.setTag(holder);
         } else {
-            dayText.setBackgroundColor(Color.TRANSPARENT);
+            holder = (ViewHolder) convertView.getTag();
         }
+
+        int day = position + 1;
+        holder.dayText.setText(String.valueOf(day));
+
+        // Style for selected day
+        if (day == selectedDay) {
+            convertView.setBackgroundColor(Color.argb(50, 0, 0, 255));
+        } else {
+            convertView.setBackgroundColor(Color.TRANSPARENT);
+        }
+
+        // Style for booked days
+        BookingInfo booking = bookings.get(day);
+        if (booking != null) {
+            switch (booking.getStatus()) {
+                case "confirmed":
+                    holder.indicatorView.setBackgroundColor(Color.GREEN);
+                    break;
+                case "pending":
+                    holder.indicatorView.setBackgroundColor(Color.YELLOW);
+                    break;
+                case "completed":
+                    holder.indicatorView.setBackgroundColor(Color.BLUE);
+                    break;
+                default:
+                    holder.indicatorView.setBackgroundColor(Color.GRAY);
+            }
+            holder.indicatorView.setVisibility(View.VISIBLE);
+        } else {
+            holder.indicatorView.setVisibility(View.GONE);
+        }
+
         return convertView;
+    }
+
+    private static class ViewHolder {
+        TextView dayText;
+        View indicatorView;
+    }
+
+    public void setSelectedDay(int day) {
+        this.selectedDay = day;
+        notifyDataSetChanged();
+    }
+
+    public void addBooking(int day, BookingInfo booking) {
+        bookings.put(day, booking);
+        notifyDataSetChanged();
+    }
+
+    public void removeBooking(int day) {
+        bookings.remove(day);
+        notifyDataSetChanged();
+    }
+
+    public BookingInfo getBooking(int day) {
+        return bookings.get(day);
+    }
+
+    public void clearBookings() {
+        bookings.clear();
+        notifyDataSetChanged();
+    }
+
+    public void setMonth(Calendar newCalendar) {
+        this.calendar = newCalendar;
+        notifyDataSetChanged();
     }
 }
