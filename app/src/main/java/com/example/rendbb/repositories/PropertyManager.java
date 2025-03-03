@@ -4,65 +4,73 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import com.example.rendbb.models.PropertyItem;
 import com.example.rendbb.utilities.DatabaseHelper;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PropertyManager {
-    private SQLiteDatabase db;
     private DatabaseHelper dbHelper;
+    private SQLiteDatabase db;
 
     public PropertyManager(Context context) {
         dbHelper = new DatabaseHelper(context);
         db = dbHelper.getWritableDatabase();
     }
 
-    public List<PropertyItem> getAllProperties() {
-        List<PropertyItem> properties = new ArrayList<>();
-        String query = "SELECT * FROM " + DatabaseHelper.TABLE_PROPERTIES;
-        Cursor cursor = db.rawQuery(query, null);
-
-        while (cursor.moveToNext()) {
-            int id = cursor.getInt(cursor.getColumnIndex("id"));
-            String name = cursor.getString(cursor.getColumnIndex("name"));
-            String location = cursor.getString(cursor.getColumnIndex("location"));
-            String description = cursor.getString(cursor.getColumnIndex("description"));
-            int managerId = cursor.getInt(cursor.getColumnIndex("manager_id"));
-            double price = cursor.getDouble(cursor.getColumnIndex("price_per_night"));
-            int maxOccupants = cursor.getInt(cursor.getColumnIndex("max_occupants"));
-            String status = dbHelper.getPropertyStatus(id);
-
-            properties.add(new PropertyItem(id, name, location, description,
-                    status, managerId, price, maxOccupants));
-        }
-        cursor.close();
-        return properties;
-    }
-
-    public long addProperty(PropertyItem property) {
+    public long addProperty(String name, String location, String description, int managerId,
+                            double pricePerNight, int maxOccupants) {
         ContentValues values = new ContentValues();
-        values.put("name", property.getName());
-        values.put("location", property.getLocation());
-        values.put("description", property.getDescription());
-        values.put("manager_id", property.getManagerId());
-        values.put("price_per_night", property.getPricePerNight());
-        values.put("max_occupants", property.getMaxOccupants());
-        values.put("status", property.getStatus());
-
+        values.put("name", name);
+        values.put("location", location);
+        values.put("description", description);
+        values.put("manager_id", managerId);
+        values.put("price_per_night", pricePerNight);
+        values.put("max_occupants", maxOccupants);
+        values.put("status", "available"); // Default status
         return db.insert(DatabaseHelper.TABLE_PROPERTIES, null, values);
     }
 
-    public int updateProperty(PropertyItem property) {
+    public int updateProperty(int id, String name, String location, String description,
+                              double pricePerNight, int maxOccupants) {
         ContentValues values = new ContentValues();
-        values.put("name", property.getName());
-        values.put("location", property.getLocation());
-        values.put("description", property.getDescription());
-        values.put("price_per_night", property.getPricePerNight());
-        values.put("max_occupants", property.getMaxOccupants());
-        values.put("status", property.getStatus());
+        values.put("name", name);
+        values.put("location", location);
+        values.put("description", description);
+        values.put("price_per_night", pricePerNight);
+        values.put("max_occupants", maxOccupants);
+        return db.update(DatabaseHelper.TABLE_PROPERTIES, values, "id=?",
+                new String[]{String.valueOf(id)});
+    }
 
-        return db.update(DatabaseHelper.TABLE_PROPERTIES, values,
-                "id=?", new String[]{String.valueOf(property.getId())});
+    public String getPropertyStatus(int id) {
+        return dbHelper.getPropertyStatus(id);
+    }
+
+    public boolean updatePropertyStatus(int id, String status) {
+        return dbHelper.updatePropertyStatus(id, status) > 0;
+    }
+
+    public int deleteProperty(int propertyId) {
+        return db.delete(DatabaseHelper.TABLE_PROPERTIES, "id=?",
+                new String[]{String.valueOf(propertyId)});
+    }
+
+    public Cursor getAllProperties() {
+        String query = "SELECT * FROM " + DatabaseHelper.TABLE_PROPERTIES;
+        return db.rawQuery(query, null);
+    }
+
+    public Cursor getPropertyById(int propertyId) {
+        return db.query(DatabaseHelper.TABLE_PROPERTIES,
+                null,
+                "id=?",
+                new String[]{String.valueOf(propertyId)},
+                null,
+                null,
+                null);
+    }
+
+    public void close() {
+        if (db != null && db.isOpen()) {
+            db.close();
+        }
     }
 }

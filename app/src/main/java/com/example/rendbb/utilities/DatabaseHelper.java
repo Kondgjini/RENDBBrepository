@@ -21,6 +21,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_USERNAME = "username";
     private static final String KEY_PASSWORD = "password";
     private static final String KEY_EMAIL = "email";
+    private static final String KEY_STATUS = "status";
 
     public DatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -70,14 +71,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         insertDefaultAdmin(db);
     }
 
-    private void insertDefaultAdmin(SQLiteDatabase db) {
-        ContentValues values = new ContentValues();
-        values.put(KEY_USERNAME, "admin");
-        values.put(KEY_PASSWORD, "admin123"); // In production, use proper password hashing
-        values.put(KEY_EMAIL, "admin@rendbb.com");
-        db.insert(TABLE_USERS, null, values);
-    }
-
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + TABLE_BOOKINGS);
@@ -86,6 +79,45 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    private void insertDefaultAdmin(SQLiteDatabase db) {
+        ContentValues values = new ContentValues();
+        values.put(KEY_USERNAME, "admin");
+        values.put(KEY_PASSWORD, "admin123"); // In production, use proper password hashing
+        values.put(KEY_EMAIL, "admin@rendbb.com");
+        db.insert(TABLE_USERS, null, values);
+    }
+
+    // Add the missing getPropertyStatus method
+    public String getPropertyStatus(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        String status = "unknown";
+
+        String[] columns = { KEY_STATUS };
+        String selection = KEY_ID + "=?";
+        String[] selectionArgs = { String.valueOf(id) };
+
+        try {
+            Cursor cursor = db.query(TABLE_PROPERTIES, columns, selection, selectionArgs, null, null, null);
+            if (cursor.moveToFirst()) {
+                status = cursor.getString(cursor.getColumnIndex(KEY_STATUS));
+            }
+            cursor.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return status;
+    }
+
+    // Method to update property status
+    public int updatePropertyStatus(int id, String status) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(KEY_STATUS, status);
+        return db.update(TABLE_PROPERTIES, values, KEY_ID + "=?", new String[]{String.valueOf(id)});
+    }
+
+    // Add the existing authentication methods
     public boolean authenticateUser(String username, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
         String[] columns = { KEY_ID };
@@ -95,7 +127,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Cursor cursor = db.query(TABLE_USERS, columns, selection, selectionArgs, null, null, null);
         int count = cursor.getCount();
         cursor.close();
-        db.close();
 
         return count > 0;
     }
