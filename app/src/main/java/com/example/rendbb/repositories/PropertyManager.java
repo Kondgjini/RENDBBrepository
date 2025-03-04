@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 import com.example.rendbb.utilities.DatabaseHelper;
 import com.example.rendbb.models.PropertyItem;
 import java.util.ArrayList;
@@ -62,15 +63,33 @@ public class PropertyManager {
 
         if (cursor.moveToFirst()) {
             do {
+                // Check for valid column indices
+                int idIndex = cursor.getColumnIndex("id");
+                int nameIndex = cursor.getColumnIndex("name");
+                int locationIndex = cursor.getColumnIndex("location");
+                int descriptionIndex = cursor.getColumnIndex("description");
+                int statusIndex = cursor.getColumnIndex("status");
+                int managerIdIndex = cursor.getColumnIndex("manager_id");
+                int pricePerNightIndex = cursor.getColumnIndex("price_per_night");
+                int maxOccupantsIndex = cursor.getColumnIndex("max_occupants");
+
+                if (idIndex == -1 || nameIndex == -1 || locationIndex == -1 ||
+                        descriptionIndex == -1 || statusIndex == -1 ||
+                        managerIdIndex == -1 || pricePerNightIndex == -1 ||
+                        maxOccupantsIndex == -1) {
+                    Log.e("PropertyManager", "Invalid column index detected.");
+                    continue;
+                }
+
                 PropertyItem property = new PropertyItem(
-                        cursor.getInt(cursor.getColumnIndex("id")),
-                        cursor.getString(cursor.getColumnIndex("name")),
-                        cursor.getString(cursor.getColumnIndex("location")),
-                        cursor.getString(cursor.getColumnIndex("description")),
-                        cursor.getString(cursor.getColumnIndex("status")),
-                        cursor.getInt(cursor.getColumnIndex("manager_id")),
-                        cursor.getDouble(cursor.getColumnIndex("price_per_night")),
-                        cursor.getInt(cursor.getColumnIndex("max_occupants"))
+                        cursor.getInt(idIndex),
+                        cursor.getString(nameIndex),
+                        cursor.getString(locationIndex),
+                        cursor.getString(descriptionIndex),
+                        cursor.getString(statusIndex),
+                        cursor.getInt(managerIdIndex),
+                        cursor.getDouble(pricePerNightIndex),
+                        cursor.getInt(maxOccupantsIndex)
                 );
                 propertyList.add(property);
             } while (cursor.moveToNext());
@@ -90,16 +109,33 @@ public class PropertyManager {
 
         PropertyItem property = null;
         if (cursor.moveToFirst()) {
-            property = new PropertyItem(
-                    cursor.getInt(cursor.getColumnIndex("id")),
-                    cursor.getString(cursor.getColumnIndex("name")),
-                    cursor.getString(cursor.getColumnIndex("location")),
-                    cursor.getString(cursor.getColumnIndex("description")),
-                    cursor.getString(cursor.getColumnIndex("status")),
-                    cursor.getInt(cursor.getColumnIndex("manager_id")),
-                    cursor.getDouble(cursor.getColumnIndex("price_per_night")),
-                    cursor.getInt(cursor.getColumnIndex("max_occupants"))
-            );
+            // Check for valid column indices
+            int idIndex = cursor.getColumnIndex("id");
+            int nameIndex = cursor.getColumnIndex("name");
+            int locationIndex = cursor.getColumnIndex("location");
+            int descriptionIndex = cursor.getColumnIndex("description");
+            int statusIndex = cursor.getColumnIndex("status");
+            int managerIdIndex = cursor.getColumnIndex("manager_id");
+            int pricePerNightIndex = cursor.getColumnIndex("price_per_night");
+            int maxOccupantsIndex = cursor.getColumnIndex("max_occupants");
+
+            if (idIndex == -1 || nameIndex == -1 || locationIndex == -1 ||
+                    descriptionIndex == -1 || statusIndex == -1 ||
+                    managerIdIndex == -1 || pricePerNightIndex == -1 ||
+                    maxOccupantsIndex == -1) {
+                Log.e("PropertyManager", "Invalid column index detected.");
+            } else {
+                property = new PropertyItem(
+                        cursor.getInt(idIndex),
+                        cursor.getString(nameIndex),
+                        cursor.getString(locationIndex),
+                        cursor.getString(descriptionIndex),
+                        cursor.getString(statusIndex),
+                        cursor.getInt(managerIdIndex),
+                        cursor.getDouble(pricePerNightIndex),
+                        cursor.getInt(maxOccupantsIndex)
+                );
+            }
         }
         cursor.close();
         return property;
@@ -117,15 +153,33 @@ public class PropertyManager {
 
         if (cursor.moveToFirst()) {
             do {
+                // Check for valid column indices
+                int idIndex = cursor.getColumnIndex("id");
+                int nameIndex = cursor.getColumnIndex("name");
+                int locationIndex = cursor.getColumnIndex("location");
+                int descriptionIndex = cursor.getColumnIndex("description");
+                int statusIndex = cursor.getColumnIndex("status");
+                int managerIdIndex = cursor.getColumnIndex("manager_id");
+                int pricePerNightIndex = cursor.getColumnIndex("price_per_night");
+                int maxOccupantsIndex = cursor.getColumnIndex("max_occupants");
+
+                if (idIndex == -1 || nameIndex == -1 || locationIndex == -1 ||
+                        descriptionIndex == -1 || statusIndex == -1 ||
+                        managerIdIndex == -1 || pricePerNightIndex == -1 ||
+                        maxOccupantsIndex == -1) {
+                    Log.e("PropertyManager", "Invalid column index detected.");
+                    continue;
+                }
+
                 PropertyItem property = new PropertyItem(
-                        cursor.getInt(cursor.getColumnIndex("id")),
-                        cursor.getString(cursor.getColumnIndex("name")),
-                        cursor.getString(cursor.getColumnIndex("location")),
-                        cursor.getString(cursor.getColumnIndex("description")),
-                        cursor.getString(cursor.getColumnIndex("status")),
-                        cursor.getInt(cursor.getColumnIndex("manager_id")),
-                        cursor.getDouble(cursor.getColumnIndex("price_per_night")),
-                        cursor.getInt(cursor.getColumnIndex("max_occupants"))
+                        cursor.getInt(idIndex),
+                        cursor.getString(nameIndex),
+                        cursor.getString(locationIndex),
+                        cursor.getString(descriptionIndex),
+                        cursor.getString(statusIndex),
+                        cursor.getInt(managerIdIndex),
+                        cursor.getDouble(pricePerNightIndex),
+                        cursor.getInt(maxOccupantsIndex)
                 );
                 propertyList.add(property);
             } while (cursor.moveToNext());
