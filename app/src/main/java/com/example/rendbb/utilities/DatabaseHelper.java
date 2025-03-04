@@ -17,7 +17,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
     public static final String TABLE_PROPERTIES = "properties";
     public static final String TABLE_BOOKINGS = "bookings";
 
-    // Common column names
+    // Column names for external access (RegisterActivity, etc.)
+    public static final String COLUMN_USERNAME = "username";
+    public static final String COLUMN_EMAIL = "email";
+    public static final String COLUMN_PASSWORD = "password";
+
+    // Common column names for internal use
     private static final String KEY_ID = "id";
     private static final String KEY_USERNAME = "username";
     private static final String KEY_PASSWORD = "password";

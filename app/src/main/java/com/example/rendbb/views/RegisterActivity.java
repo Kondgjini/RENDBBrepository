@@ -1,4 +1,4 @@
-package com.example.rendbb.views; // Replace with your actual package name
+package com.example.rendbb.views;
 
 import android.content.ContentValues;
 import android.content.Intent;
@@ -12,8 +12,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
-import com.example.rendbb.R; // Replace with your actual R import
-import com.example.rendbb.utilities.DatabaseHelper; // Replace with your actual DatabaseHelper import
+import com.example.rendbb.R;
+import com.example.rendbb.utilities.DatabaseHelper;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.nio.charset.StandardCharsets;

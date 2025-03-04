@@ -11,4 +11,6 @@
     <string name="login">Login</string>
     <string name="manage_bookings">Manage Bookings</string>
     <string name="preferences">Preferences</string>
+    <!-- Added missing string -->
+    <string name="email">Email</string>
 </resources>
