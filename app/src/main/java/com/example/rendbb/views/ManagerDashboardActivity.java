@@ -2,6 +2,7 @@ package com.example.rendbb.views;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
@@ -18,6 +19,7 @@ import java.util.List;
 
 public class ManagerDashboardActivity extends AppCompatActivity {
 
+    private static final String TAG = "ManagerDashboardActivity";
     private Button addPropertyButton, manageBookingsButton;
     private ImageButton preferencesGear;
     private RecyclerView propertiesRecyclerView;
@@ -27,13 +29,18 @@ public class ManagerDashboardActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_manager_dashboard);
+        try {
+            setContentView(R.layout.activity_manager_dashboard);
 
-        propertyManager = new PropertyManager(this);
-        initializeViews();
-        setupClickListeners();
-        setupRecyclerView();
-        loadDashboardData();
+            propertyManager = new PropertyManager(this);
+            initializeViews();
+            setupClickListeners();
+            setupRecyclerView();
+            loadDashboardData();
+        } catch (Exception e) {
+            Log.e(TAG, "Error in onCreate", e);
+            finish();
+        }
     }
 
     private void initializeViews() {
@@ -66,26 +73,30 @@ public class ManagerDashboardActivity extends AppCompatActivity {
     }
 
     private void loadDashboardData() {
-        List<PropertyItem> properties = propertyManager.getAllProperties();
+        try {
+            List<PropertyItem> properties = propertyManager.getAllProperties();
 
-        // Sort properties based on status priority
-        properties.sort((p1, p2) -> {
-            int p1Priority = getStatusPriority(p1.getStatus());
-            int p2Priority = getStatusPriority(p2.getStatus());
-            return p1Priority - p2Priority;
-        });
+            // Sort properties based on status priority
+            properties.sort((p1, p2) -> {
+                int p1Priority = getStatusPriority(p1.getStatus());
+                int p2Priority = getStatusPriority(p2.getStatus());
+                return p1Priority - p2Priority;
+            });
 
-        propertyAdapter = new PropertyAdapter(properties, item -> {
-            Intent intent = new Intent(this, PropertyDetailsActivity.class);
-            intent.putExtra("propertyId", item.getId());
-            intent.putExtra("name", item.getName());
-            intent.putExtra("location", item.getLocation());
-            intent.putExtra("description", item.getDescription());
-            intent.putExtra("status", item.getStatus());
-            startActivity(intent);
-        });
+            propertyAdapter = new PropertyAdapter(properties, item -> {
+                Intent intent = new Intent(this, PropertyDetailsActivity.class);
+                intent.putExtra("propertyId", item.getId());
+                intent.putExtra("name", item.getName());
+                intent.putExtra("location", item.getLocation());
+                intent.putExtra("description", item.getDescription());
+                intent.putExtra("status", item.getStatus());
+                startActivity(intent);
+            });
 
-        propertiesRecyclerView.setAdapter(propertyAdapter);
+            propertiesRecyclerView.setAdapter(propertyAdapter);
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading dashboard data", e);
+        }
     }
 
     @Override
