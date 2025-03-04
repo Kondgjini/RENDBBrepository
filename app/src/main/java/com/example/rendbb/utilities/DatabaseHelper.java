@@ -83,7 +83,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    // Add the missing getPropertyStatus method
     public String getPropertyStatus(int id) {
         SQLiteDatabase db = this.getReadableDatabase();
         String status = "unknown";
@@ -109,7 +108,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return status;
     }
 
-    // Add the missing updatePropertyStatus method
     public int updatePropertyStatus(int id, String status) {
         SQLiteDatabase db = this.getWritableDatabase();
         int result = 0;
@@ -131,7 +129,6 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         return result;
     }
 
-    // Existing authentication methods
     public boolean authenticateUser(String username, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
         boolean result = false;
