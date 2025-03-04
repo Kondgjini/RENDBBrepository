@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -14,17 +15,19 @@ import com.example.rendbb.R;
 import com.example.rendbb.adapters.PropertyAdapter;
 import com.example.rendbb.models.PropertyItem;
 import com.example.rendbb.repositories.PropertyManager;
+import com.example.rendbb.utilities.DatabaseHelper;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ManagerDashboardActivity extends AppCompatActivity {
 
     private static final String TAG = "ManagerDashboardActivity";
-    private Button addPropertyButton, manageBookingsButton;
+    private Button addPropertyButton, manageBookingsButton, clearDatabaseButton;
     private ImageButton preferencesGear;
     private RecyclerView propertiesRecyclerView;
     private PropertyManager propertyManager;
     private PropertyAdapter propertyAdapter;
+    private DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +36,7 @@ public class ManagerDashboardActivity extends AppCompatActivity {
             setContentView(R.layout.activity_manager_dashboard);
 
             propertyManager = new PropertyManager(this);
+            dbHelper = new DatabaseHelper(this);
             initializeViews();
             setupClickListeners();
             setupRecyclerView();
@@ -48,6 +52,7 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         manageBookingsButton = findViewById(R.id.manageBookingsButton);
         preferencesGear = findViewById(R.id.preferencesGear);
         propertiesRecyclerView = findViewById(R.id.propertiesRecyclerView);
+        clearDatabaseButton = findViewById(R.id.clearDatabaseButton);
     }
 
     private void setupClickListeners() {
@@ -64,6 +69,12 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         preferencesGear.setOnClickListener(v -> {
             Intent intent = new Intent(this, PreferencesActivity.class);
             startActivity(intent);
+        });
+
+        clearDatabaseButton.setOnClickListener(v -> {
+            dbHelper.clearAllTables();
+            Toast.makeText(this, "Database cleared", Toast.LENGTH_SHORT).show();
+            loadDashboardData();
         });
     }
 
@@ -185,10 +196,14 @@ public class ManagerDashboardActivity extends AppCompatActivity {
 
     private int getStatusPriority(String status) {
         switch (status.toLowerCase()) {
-            case "occupied": return 1;
-            case "maintenance": return 2;
-            case "available": return 3;
-            default: return 4;
+            case "occupied":
+                return 1;
+            case "maintenance":
+                return 2;
+            case "available":
+                return 3;
+            default:
+                return 4;
         }
     }
 

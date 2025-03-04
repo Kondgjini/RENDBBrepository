@@ -28,6 +28,12 @@
         android:layout_height="wrap_content"
         android:text="@string/manage_bookings" />
 
+    <Button
+        android:id="@+id/clearDatabaseButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Clear Database" />
+
     <!-- RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/propertiesRecyclerView"

@@ -83,6 +83,21 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
+    public void clearAllTables() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        try {
+            db.beginTransaction();
+            db.execSQL("DELETE FROM " + TABLE_USERS);
+            db.execSQL("DELETE FROM " + TABLE_PROPERTIES);
+            db.execSQL("DELETE FROM " + TABLE_BOOKINGS);
+            db.setTransactionSuccessful();
+        } catch (Exception e) {
+            Log.e(TAG, "Error clearing tables", e);
+        } finally {
+            db.endTransaction();
+        }
+    }
+
     public String getPropertyStatus(int id) {
         SQLiteDatabase db = this.getReadableDatabase();
         String status = "unknown";
