@@ -3,6 +3,7 @@ package com.example.rendbb.views;
 import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
@@ -17,6 +18,7 @@ import java.util.Calendar;
 import java.util.Locale;
 
 public class AddBookingActivity extends AppCompatActivity {
+    private static final String TAG = "AddBookingActivity";
     private TextView propertyNameText;
     private EditText guestNameEdit;
     private EditText guestEmailEdit;
@@ -38,30 +40,45 @@ public class AddBookingActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_booking);
 
-        // Enable back button in action bar
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle("Add Booking");
+        try {
+            // Enable back button in action bar
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                getSupportActionBar().setTitle("Add Booking");
+            }
 
-        // Initialize helpers
-        dbHelper = new DatabaseHelper(this);
-        dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+            // Initialize helpers
+            dbHelper = new DatabaseHelper(this);
+            dateFormat = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
 
-        // Get property ID from intent
-        propertyId = getIntent().getIntExtra("propertyId", -1);
-        if (propertyId == -1) {
-            Toast.makeText(this, "Error loading property", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+            // Get property ID from intent
+            propertyId = getIntent().getIntExtra("propertyId", -1);
+            if (propertyId == -1) {
+                Toast.makeText(this, "Error loading property", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
+
+            // Initialize views
+            initializeViews();
+
+            // Set the property name
+            String propertyName = getIntent().getStringExtra("propertyName");
+            if (propertyName != null) {
+                propertyNameText.setText(propertyName);
+            } else {
+                propertyNameText.setText("Property #" + propertyId);
+            }
+
+            // Setup dates
+            setupDates();
+
+            // Setup button listeners
+            setupClickListeners();
+        } catch (Exception e) {
+            Log.e(TAG, "Error in onCreate", e);
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
-
-        // Initialize views
-        initializeViews();
-
-        // Setup date pickers
-        setupDatePickers();
-
-        // Setup button listeners
-        setupClickListeners();
     }
 
     private void initializeViews() {
@@ -74,18 +91,31 @@ public class AddBookingActivity extends AppCompatActivity {
         notesEdit = findViewById(R.id.notesEdit);
         saveButton = findViewById(R.id.saveButton);
         cancelButton = findViewById(R.id.cancelButton);
-
-        // Set property name
-        // TODO: Get property name from database
-        propertyNameText.setText("Property #" + propertyId);
     }
 
-    private void setupDatePickers() {
-        checkInDate = Calendar.getInstance();
-        checkOutDate = Calendar.getInstance();
-        checkOutDate.add(Calendar.DAY_OF_MONTH, 1);
+    private void setupDates() {
+        // Set the check-in date from intent if provided
+        int year = getIntent().getIntExtra("checkInYear", -1);
+        int month = getIntent().getIntExtra("checkInMonth", -1);
+        int day = getIntent().getIntExtra("checkInDay", -1);
 
-        updateDateTexts();
+        if (year != -1 && month != -1 && day != -1) {
+            checkInDate = Calendar.getInstance();
+            checkInDate.set(year, month, day);
+
+            // Set check-out date to the next day
+            checkOutDate = (Calendar) checkInDate.clone();
+            checkOutDate.add(Calendar.DAY_OF_MONTH, 1);
+
+            updateDateTexts();
+        } else {
+            // Default dates if none provided
+            checkInDate = Calendar.getInstance();
+            checkOutDate = Calendar.getInstance();
+            checkOutDate.add(Calendar.DAY_OF_MONTH, 1);
+
+            updateDateTexts();
+        }
 
         checkInDateText.setOnClickListener(v -> showDatePicker(true));
         checkOutDateText.setOnClickListener(v -> showDatePicker(false));
@@ -141,9 +171,40 @@ public class AddBookingActivity extends AppCompatActivity {
             return;
         }
 
-        // TODO: Implement booking creation in DatabaseHelper
-        Toast.makeText(this, "Booking saved successfully", Toast.LENGTH_SHORT).show();
-        finish();
+        try {
+            double pricePerNight = getIntent().getDoubleExtra("price", 0.0);
+
+            // Calculate number of nights
+            long diffInMillis = checkOutDate.getTimeInMillis() - checkInDate.getTimeInMillis();
+            int nights = (int) (diffInMillis / (24 * 60 * 60 * 1000));
+            double totalPrice = pricePerNight * nights;
+
+            // Create booking object
+            BookingInfo booking = new BookingInfo(
+                    0, // id will be set by database
+                    propertyId,
+                    1, // assuming user id 1
+                    guestNameEdit.getText().toString().trim(),
+                    checkInDate,
+                    checkOutDate,
+                    totalPrice,
+                    "pending", // default status
+                    notesEdit.getText().toString().trim()
+            );
+
+            // Save to database
+            long result = dbHelper.addBooking(booking);
+
+            if (result != -1) {
+                Toast.makeText(this, "Booking saved successfully", Toast.LENGTH_SHORT).show();
+                finish();
+            } else {
+                Toast.makeText(this, "Error saving booking", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error saving booking", e);
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     private boolean validateInputs() {

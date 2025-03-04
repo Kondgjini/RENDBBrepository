@@ -7,6 +7,19 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.example.rendbb.models.BookingInfo;
+import com.example.rendbb.models.PropertyItem;
+
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Locale;
+
 public class DatabaseHelper extends SQLiteOpenHelper {
     private static final String TAG = "DatabaseHelper";
     public static final String DATABASE_NAME = "rendbb.db";
@@ -65,6 +78,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
                     + KEY_ID + " INTEGER PRIMARY KEY AUTOINCREMENT,"
                     + "property_id INTEGER NOT NULL,"
                     + "guest_name TEXT NOT NULL,"
+                    + "guest_email TEXT,"
+                    + "guest_phone TEXT,"
                     + "check_in_date DATE NOT NULL,"
                     + "check_out_date DATE NOT NULL,"
                     + "total_price REAL NOT NULL,"
@@ -155,12 +170,20 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         Cursor cursor = null;
 
         try {
+            // Hash the password first for comparison
+            String hashedPassword = hashPassword(password);
+
             String[] columns = { KEY_ID };
             String selection = KEY_USERNAME + "=? AND " + KEY_PASSWORD + "=?";
-            String[] selectionArgs = { username, password };
+            String[] selectionArgs = { username, hashedPassword };
 
             cursor = db.query(TABLE_USERS, columns, selection, selectionArgs, null, null, null);
             result = (cursor != null && cursor.getCount() > 0);
+
+            if (!result) {
+                // For debugging
+                Log.d(TAG, "Authentication failed for user: " + username);
+            }
         } catch (Exception e) {
             Log.e(TAG, "Error during authentication", e);
         } finally {
@@ -185,7 +208,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(KEY_USERNAME, username);
-        values.put(KEY_PASSWORD, password);
+        values.put(KEY_PASSWORD, hashPassword(password));
         values.put(KEY_EMAIL, email);
 
         try {
@@ -193,6 +216,434 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         } catch (Exception e) {
             Log.e(TAG, "Error adding user", e);
             return -1;
+        }
+    }
+
+    // Password hashing method using SHA-256
+    private String hashPassword(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(password.getBytes(StandardCharsets.UTF_8));
+            BigInteger number = new BigInteger(1, hash);
+            return number.toString(16); // Convert to hexadecimal
+        } catch (NoSuchAlgorithmException e) {
+            Log.e(TAG, "Error hashing password", e);
+            return password; // Fallback to unhashed password in case of error
+        }
+    }
+
+    // Property methods
+    public long addProperty(PropertyItem property) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put("name", property.getName());
+        values.put("location", property.getLocation());
+        values.put("description", property.getDescription());
+        values.put(KEY_STATUS, property.getStatus());
+        values.put("manager_id", property.getManagerId());
+        values.put("price_per_night", property.getPricePerNight());
+        values.put("max_occupants", property.getMaxOccupants());
+
+        try {
+            return db.insertOrThrow(TABLE_PROPERTIES, null, values);
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding property", e);
+            return -1;
+        }
+    }
+
+    public int updateProperty(PropertyItem property) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put("name", property.getName());
+        values.put("location", property.getLocation());
+        values.put("description", property.getDescription());
+        values.put(KEY_STATUS, property.getStatus());
+        values.put("manager_id", property.getManagerId());
+        values.put("price_per_night", property.getPricePerNight());
+        values.put("max_occupants", property.getMaxOccupants());
+
+        try {
+            int result = db.update(TABLE_PROPERTIES,
+                    values,
+                    KEY_ID + " = ?",
+                    new String[]{String.valueOf(property.getId())});
+            Log.d(TAG, "Updated property with ID " + property.getId() + ", result: " + result);
+            return result;
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating property", e);
+            return 0;
+        }
+    }
+
+    public int deleteProperty(int propertyId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        try {
+            // First delete all bookings for this property
+            db.delete(TABLE_BOOKINGS, "property_id = ?", new String[]{String.valueOf(propertyId)});
+
+            // Then delete the property
+            return db.delete(TABLE_PROPERTIES, KEY_ID + " = ?", new String[]{String.valueOf(propertyId)});
+        } catch (Exception e) {
+            Log.e(TAG, "Error deleting property", e);
+            return 0;
+        }
+    }
+
+    public PropertyItem getProperty(int propertyId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        PropertyItem property = null;
+
+        try {
+            Cursor cursor = db.query(TABLE_PROPERTIES,
+                    null,
+                    KEY_ID + " = ?",
+                    new String[]{String.valueOf(propertyId)},
+                    null, null, null);
+
+            if (cursor != null && cursor.moveToFirst()) {
+                int idIndex = cursor.getColumnIndex(KEY_ID);
+                int nameIndex = cursor.getColumnIndex("name");
+                int locationIndex = cursor.getColumnIndex("location");
+                int descriptionIndex = cursor.getColumnIndex("description");
+                int statusIndex = cursor.getColumnIndex(KEY_STATUS);
+                int managerIdIndex = cursor.getColumnIndex("manager_id");
+                int priceIndex = cursor.getColumnIndex("price_per_night");
+                int occupantsIndex = cursor.getColumnIndex("max_occupants");
+
+                if (idIndex != -1 && nameIndex != -1 && locationIndex != -1 &&
+                        descriptionIndex != -1 && statusIndex != -1 && managerIdIndex != -1 &&
+                        priceIndex != -1 && occupantsIndex != -1) {
+
+                    property = new PropertyItem(
+                            cursor.getInt(idIndex),
+                            cursor.getString(nameIndex),
+                            cursor.getString(locationIndex),
+                            cursor.getString(descriptionIndex),
+                            cursor.getString(statusIndex),
+                            cursor.getInt(managerIdIndex),
+                            cursor.getDouble(priceIndex),
+                            cursor.getInt(occupantsIndex)
+                    );
+                }
+                cursor.close();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting property", e);
+        }
+
+        return property;
+    }
+
+    public List<PropertyItem> getAllProperties() {
+        List<PropertyItem> properties = new ArrayList<>();
+        String query = "SELECT * FROM " + TABLE_PROPERTIES;
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+
+        try {
+            cursor = db.rawQuery(query, null);
+
+            if (cursor.moveToFirst()) {
+                do {
+                    int idIndex = cursor.getColumnIndex(KEY_ID);
+                    int nameIndex = cursor.getColumnIndex("name");
+                    int locationIndex = cursor.getColumnIndex("location");
+                    int descriptionIndex = cursor.getColumnIndex("description");
+                    int statusIndex = cursor.getColumnIndex(KEY_STATUS);
+                    int managerIdIndex = cursor.getColumnIndex("manager_id");
+                    int priceIndex = cursor.getColumnIndex("price_per_night");
+                    int occupantsIndex = cursor.getColumnIndex("max_occupants");
+
+                    if (idIndex != -1 && nameIndex != -1 && locationIndex != -1 &&
+                            descriptionIndex != -1 && statusIndex != -1 && managerIdIndex != -1 &&
+                            priceIndex != -1 && occupantsIndex != -1) {
+
+                        PropertyItem property = new PropertyItem(
+                                cursor.getInt(idIndex),
+                                cursor.getString(nameIndex),
+                                cursor.getString(locationIndex),
+                                cursor.getString(descriptionIndex),
+                                cursor.getString(statusIndex),
+                                cursor.getInt(managerIdIndex),
+                                cursor.getDouble(priceIndex),
+                                cursor.getInt(occupantsIndex)
+                        );
+                        properties.add(property);
+                    }
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting all properties", e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        return properties;
+    }
+
+    // Booking methods
+    public long addBooking(BookingInfo booking) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put("property_id", booking.getPropertyId());
+        values.put("guest_name", booking.getGuestName());
+        values.put("check_in_date", formatDateForDB(booking.getCheckInDate()));
+        values.put("check_out_date", formatDateForDB(booking.getCheckOutDate()));
+        values.put("total_price", booking.getTotalPrice());
+        values.put(KEY_STATUS, booking.getStatus());
+        values.put("notes", booking.getNotes());
+
+        try {
+            long result = db.insertOrThrow(TABLE_BOOKINGS, null, values);
+            if (result != -1) {
+                // Update property status to "occupied"
+                updatePropertyStatus(booking.getPropertyId(), "occupied");
+            }
+            return result;
+        } catch (Exception e) {
+            Log.e(TAG, "Error adding booking", e);
+            return -1;
+        }
+    }
+
+    public int updateBooking(BookingInfo booking) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put("property_id", booking.getPropertyId());
+        values.put("guest_name", booking.getGuestName());
+        values.put("check_in_date", formatDateForDB(booking.getCheckInDate()));
+        values.put("check_out_date", formatDateForDB(booking.getCheckOutDate()));
+        values.put("total_price", booking.getTotalPrice());
+        values.put(KEY_STATUS, booking.getStatus());
+        values.put("notes", booking.getNotes());
+
+        try {
+            return db.update(TABLE_BOOKINGS,
+                    values,
+                    KEY_ID + " = ?",
+                    new String[]{String.valueOf(booking.getId())});
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating booking", e);
+            return 0;
+        }
+    }
+
+    public int deleteBooking(int bookingId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        try {
+            // Get the property ID for this booking
+            int propertyId = -1;
+            Cursor cursor = db.query(TABLE_BOOKINGS,
+                    new String[]{"property_id"},
+                    KEY_ID + " = ?",
+                    new String[]{String.valueOf(bookingId)},
+                    null, null, null);
+
+            if (cursor != null && cursor.moveToFirst()) {
+                int propertyIdIndex = cursor.getColumnIndex("property_id");
+                if (propertyIdIndex != -1) {
+                    propertyId = cursor.getInt(propertyIdIndex);
+                }
+                cursor.close();
+            }
+
+            // Delete the booking
+            int result = db.delete(TABLE_BOOKINGS, KEY_ID + " = ?", new String[]{String.valueOf(bookingId)});
+
+            // Check if there are other bookings for this property
+            if (propertyId != -1) {
+                cursor = db.query(TABLE_BOOKINGS,
+                        new String[]{KEY_ID},
+                        "property_id = ?",
+                        new String[]{String.valueOf(propertyId)},
+                        null, null, null);
+
+                if (cursor != null) {
+                    if (cursor.getCount() == 0) {
+                        // No more bookings, update property status to "available"
+                        updatePropertyStatus(propertyId, "available");
+                    }
+                    cursor.close();
+                }
+            }
+
+            return result;
+        } catch (Exception e) {
+            Log.e(TAG, "Error deleting booking", e);
+            return 0;
+        }
+    }
+
+    public BookingInfo getBooking(int bookingId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        BookingInfo booking = null;
+
+        try {
+            Cursor cursor = db.query(TABLE_BOOKINGS,
+                    null,
+                    KEY_ID + " = ?",
+                    new String[]{String.valueOf(bookingId)},
+                    null, null, null);
+
+            if (cursor != null && cursor.moveToFirst()) {
+                int idIndex = cursor.getColumnIndex(KEY_ID);
+                int propertyIdIndex = cursor.getColumnIndex("property_id");
+                int guestNameIndex = cursor.getColumnIndex("guest_name");
+                int checkInDateIndex = cursor.getColumnIndex("check_in_date");
+                int checkOutDateIndex = cursor.getColumnIndex("check_out_date");
+                int totalPriceIndex = cursor.getColumnIndex("total_price");
+                int statusIndex = cursor.getColumnIndex(KEY_STATUS);
+                int notesIndex = cursor.getColumnIndex("notes");
+
+                if (idIndex != -1 && propertyIdIndex != -1 && guestNameIndex != -1 &&
+                        checkInDateIndex != -1 && checkOutDateIndex != -1 && totalPriceIndex != -1 &&
+                        statusIndex != -1 && notesIndex != -1) {
+
+                    booking = new BookingInfo(
+                            cursor.getInt(idIndex),
+                            cursor.getInt(propertyIdIndex),
+                            1, // Default user ID
+                            cursor.getString(guestNameIndex),
+                            parseDBDate(cursor.getString(checkInDateIndex)),
+                            parseDBDate(cursor.getString(checkOutDateIndex)),
+                            cursor.getDouble(totalPriceIndex),
+                            cursor.getString(statusIndex),
+                            cursor.getString(notesIndex)
+                    );
+                }
+                cursor.close();
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting booking", e);
+        }
+
+        return booking;
+    }
+
+    public List<BookingInfo> getAllBookings() {
+        List<BookingInfo> bookings = new ArrayList<>();
+        String query = "SELECT * FROM " + TABLE_BOOKINGS;
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+
+        try {
+            cursor = db.rawQuery(query, null);
+
+            if (cursor.moveToFirst()) {
+                do {
+                    int idIndex = cursor.getColumnIndex(KEY_ID);
+                    int propertyIdIndex = cursor.getColumnIndex("property_id");
+                    int guestNameIndex = cursor.getColumnIndex("guest_name");
+                    int checkInDateIndex = cursor.getColumnIndex("check_in_date");
+                    int checkOutDateIndex = cursor.getColumnIndex("check_out_date");
+                    int totalPriceIndex = cursor.getColumnIndex("total_price");
+                    int statusIndex = cursor.getColumnIndex(KEY_STATUS);
+                    int notesIndex = cursor.getColumnIndex("notes");
+
+                    if (idIndex != -1 && propertyIdIndex != -1 && guestNameIndex != -1 &&
+                            checkInDateIndex != -1 && checkOutDateIndex != -1 && totalPriceIndex != -1 &&
+                            statusIndex != -1 && notesIndex != -1) {
+
+                        BookingInfo booking = new BookingInfo(
+                                cursor.getInt(idIndex),
+                                cursor.getInt(propertyIdIndex),
+                                1, // Default user ID
+                                cursor.getString(guestNameIndex),
+                                parseDBDate(cursor.getString(checkInDateIndex)),
+                                parseDBDate(cursor.getString(checkOutDateIndex)),
+                                cursor.getDouble(totalPriceIndex),
+                                cursor.getString(statusIndex),
+                                cursor.getString(notesIndex)
+                        );
+                        bookings.add(booking);
+                    }
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting all bookings", e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        return bookings;
+    }
+
+    public List<BookingInfo> getBookingsForProperty(int propertyId) {
+        List<BookingInfo> bookings = new ArrayList<>();
+        String query = "SELECT * FROM " + TABLE_BOOKINGS + " WHERE property_id = ?";
+
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor cursor = null;
+
+        try {
+            cursor = db.rawQuery(query, new String[]{String.valueOf(propertyId)});
+
+            if (cursor.moveToFirst()) {
+                do {
+                    int idIndex = cursor.getColumnIndex(KEY_ID);
+                    int guestNameIndex = cursor.getColumnIndex("guest_name");
+                    int checkInDateIndex = cursor.getColumnIndex("check_in_date");
+                    int checkOutDateIndex = cursor.getColumnIndex("check_out_date");
+                    int totalPriceIndex = cursor.getColumnIndex("total_price");
+                    int statusIndex = cursor.getColumnIndex(KEY_STATUS);
+                    int notesIndex = cursor.getColumnIndex("notes");
+
+                    if (idIndex != -1 && guestNameIndex != -1 && checkInDateIndex != -1 &&
+                            checkOutDateIndex != -1 && totalPriceIndex != -1 && statusIndex != -1 &&
+                            notesIndex != -1) {
+
+                        BookingInfo booking = new BookingInfo(
+                                cursor.getInt(idIndex),
+                                propertyId,
+                                1, // Default user ID
+                                cursor.getString(guestNameIndex),
+                                parseDBDate(cursor.getString(checkInDateIndex)),
+                                parseDBDate(cursor.getString(checkOutDateIndex)),
+                                cursor.getDouble(totalPriceIndex),
+                                cursor.getString(statusIndex),
+                                cursor.getString(notesIndex)
+                        );
+                        bookings.add(booking);
+                    }
+                } while (cursor.moveToNext());
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error getting bookings for property", e);
+        } finally {
+            if (cursor != null) {
+                cursor.close();
+            }
+        }
+
+        return bookings;
+    }
+
+    private String formatDateForDB(Calendar calendar) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        return dateFormat.format(calendar.getTime());
+    }
+
+    private Calendar parseDBDate(String dateStr) {
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(dateFormat.parse(dateStr));
+            return calendar;
+        } catch (Exception e) {
+            Log.e(TAG, "Error parsing date: " + dateStr, e);
+            return Calendar.getInstance();
         }
     }
 }

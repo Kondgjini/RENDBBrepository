@@ -28,6 +28,13 @@ public class LoginActivity extends AppCompatActivity {
         dbHelper = new DatabaseHelper(this);
         session = new SessionManager(getApplicationContext());
 
+        // Check if user is already logged in
+        if (session.isLoggedIn()) {
+            Intent intent = new Intent(LoginActivity.this, ManagerDashboardActivity.class);
+            startActivity(intent);
+            finish();
+        }
+
         buttonLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

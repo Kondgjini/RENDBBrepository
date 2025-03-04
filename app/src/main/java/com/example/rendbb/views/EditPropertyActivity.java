@@ -1,7 +1,9 @@
 package com.example.rendbb.views;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
@@ -10,10 +12,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.rendbb.R;
 import com.example.rendbb.models.PropertyItem;
 import com.example.rendbb.repositories.PropertyManager;
+import com.example.rendbb.utilities.DatabaseHelper;
 import java.util.List;
-import java.util.ArrayList;
 
 public class EditPropertyActivity extends AppCompatActivity {
+    private static final String TAG = "EditPropertyActivity";
     private EditText nameEditText;
     private EditText locationEditText;
     private EditText descriptionEditText;
@@ -25,101 +28,202 @@ public class EditPropertyActivity extends AppCompatActivity {
     private PropertyManager propertyManager;
     private int propertyId;
     private PropertyItem currentProperty;
+    private DatabaseHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_property);
 
-        // Enable back button in action bar
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle("Edit Property");
+        try {
+            Log.d(TAG, "Starting EditPropertyActivity onCreate");
+            // Enable back button in action bar
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                getSupportActionBar().setTitle("Edit Property");
+            }
 
-        // Initialize property manager
-        propertyManager = new PropertyManager(this);
+            // Initialize property manager and database helper
+            propertyManager = new PropertyManager(this);
+            dbHelper = new DatabaseHelper(this);
 
-        // Get property ID from intent
-        propertyId = getIntent().getIntExtra("propertyId", -1);
-        if (propertyId == -1) {
-            Toast.makeText(this, "Error loading property", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+            // Get property ID from intent
+            propertyId = getIntent().getIntExtra("propertyId", -1);
+            Log.d(TAG, "Received propertyId: " + propertyId);
+
+            if (propertyId == -1) {
+                Toast.makeText(this, "Error loading property - Invalid property ID", Toast.LENGTH_SHORT).show();
+                return; // Don't finish() to prevent logout
+            }
+
+            // Initialize views
+            initializeViews();
+
+            // Load property data
+            loadPropertyData();
+
+            // Setup button listeners
+            setupClickListeners();
+
+            Log.d(TAG, "EditPropertyActivity onCreate completed successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "Error in onCreate", e);
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            // Don't finish() here to prevent logout
         }
-
-        // Initialize views
-        initializeViews();
-
-        // Load property data
-        loadPropertyData();
-
-        // Setup button listeners
-        setupClickListeners();
     }
 
     private void initializeViews() {
-        nameEditText = findViewById(R.id.nameEditText);
-        locationEditText = findViewById(R.id.locationEditText);
-        descriptionEditText = findViewById(R.id.descriptionEditText);
-        priceEditText = findViewById(R.id.priceEditText);
-        maxOccupantsEditText = findViewById(R.id.maxOccupantsEditText);
-        updateButton = findViewById(R.id.updateButton);
-        cancelButton = findViewById(R.id.cancelButton);
+        try {
+            nameEditText = findViewById(R.id.nameEditText);
+            locationEditText = findViewById(R.id.locationEditText);
+            descriptionEditText = findViewById(R.id.descriptionEditText);
+            priceEditText = findViewById(R.id.priceEditText);
+            maxOccupantsEditText = findViewById(R.id.maxOccupantsEditText);
+            updateButton = findViewById(R.id.updateButton);
+            cancelButton = findViewById(R.id.cancelButton);
+            Log.d(TAG, "Views initialized successfully");
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing views", e);
+            Toast.makeText(this, "Error initializing views: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void loadPropertyData() {
-        // Load property details
-        List<PropertyItem> properties = propertyManager.getAllProperties();
-        for (PropertyItem property : properties) {
-            if (property.getId() == propertyId) {
-                currentProperty = property;
-                break;
-            }
-        }
+        try {
+            Log.d(TAG, "Loading property data for property ID: " + propertyId);
+            Intent intent = getIntent();
 
-        if (currentProperty != null) {
-            nameEditText.setText(currentProperty.getName());
-            locationEditText.setText(currentProperty.getLocation());
-            descriptionEditText.setText(currentProperty.getDescription());
-            priceEditText.setText(String.valueOf(currentProperty.getPricePerNight()));
-            maxOccupantsEditText.setText(String.valueOf(currentProperty.getMaxOccupants()));
-        } else {
-            Toast.makeText(this, "Property not found", Toast.LENGTH_SHORT).show();
-            finish();
+            // Get values from intent extras
+            String name = intent.getStringExtra("name");
+            String location = intent.getStringExtra("location");
+            String description = intent.getStringExtra("description");
+            String status = intent.getStringExtra("status");
+            double price = intent.getDoubleExtra("price", 0.0);
+            int maxOccupants = intent.getIntExtra("maxOccupants", 0);
+            int managerId = intent.getIntExtra("managerId", 1);
+
+            Log.d(TAG, "Intent extras - name: " + name + ", location: " + location +
+                    ", price: " + price + ", status: " + status);
+
+            // First try to get property from database
+            PropertyItem dbProperty = dbHelper.getProperty(propertyId);
+
+            // If database property exists, use it
+            if (dbProperty != null) {
+                Log.d(TAG, "Found property in database: " + dbProperty.getName() + ", price: " + dbProperty.getPricePerNight());
+                currentProperty = dbProperty;
+            }
+            // Otherwise try using PropertyManager
+            else {
+                List<PropertyItem> properties = propertyManager.getAllProperties();
+                for (PropertyItem property : properties) {
+                    if (property.getId() == propertyId) {
+                        currentProperty = property;
+                        Log.d(TAG, "Found property in PropertyManager: " + property.getName());
+                        break;
+                    }
+                }
+            }
+
+            // If still null, create from intent extras
+            if (currentProperty == null && name != null) {
+                Log.d(TAG, "Creating property from intent extras");
+                currentProperty = new PropertyItem(
+                        propertyId,
+                        name,
+                        location,
+                        description,
+                        status,
+                        managerId,
+                        price,
+                        maxOccupants
+                );
+            }
+
+            // Update UI
+            if (currentProperty != null) {
+                nameEditText.setText(currentProperty.getName());
+                locationEditText.setText(currentProperty.getLocation());
+                descriptionEditText.setText(currentProperty.getDescription());
+                priceEditText.setText(String.valueOf(currentProperty.getPricePerNight()));
+                maxOccupantsEditText.setText(String.valueOf(currentProperty.getMaxOccupants()));
+                Log.d(TAG, "Successfully populated UI fields with property data");
+            } else {
+                Log.e(TAG, "Property not found and couldn't be created from intent extras");
+                Toast.makeText(this, "Property not found", Toast.LENGTH_SHORT).show();
+                // Don't finish here to prevent logout
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error loading property data", e);
+            Toast.makeText(this, "Error loading property: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            // Don't finish here to prevent logout
         }
     }
 
     private void setupClickListeners() {
         updateButton.setOnClickListener(v -> updateProperty());
         cancelButton.setOnClickListener(v -> finish());
+        Log.d(TAG, "Click listeners set up");
     }
 
     private void updateProperty() {
+        Log.d(TAG, "Update button clicked");
         if (!validateInputs()) {
+            Log.d(TAG, "Input validation failed");
             return;
         }
 
         try {
+            // Get updated values from UI
+            String name = nameEditText.getText().toString().trim();
+            String location = locationEditText.getText().toString().trim();
+            String description = descriptionEditText.getText().toString().trim();
+            double price = Double.parseDouble(priceEditText.getText().toString().trim());
+            int maxOccupants = Integer.parseInt(maxOccupantsEditText.getText().toString().trim());
+
+            // Get existing values that we're not changing
+            String status = currentProperty.getStatus();
+            int managerId = currentProperty.getManagerId();
+
+            Log.d(TAG, "Creating updated property - id: " + propertyId + ", name: " + name +
+                    ", price: " + price + ", status: " + status);
+
             PropertyItem updatedProperty = new PropertyItem(
                     propertyId,
-                    nameEditText.getText().toString().trim(),
-                    locationEditText.getText().toString().trim(),
-                    descriptionEditText.getText().toString().trim(),
-                    currentProperty.getStatus(),
-                    currentProperty.getManagerId(),
-                    Double.parseDouble(priceEditText.getText().toString().trim()),
-                    Integer.parseInt(maxOccupantsEditText.getText().toString().trim())
+                    name,
+                    location,
+                    description,
+                    status,
+                    managerId,
+                    price,
+                    maxOccupants
             );
 
+            // Update in database directly first for debugging
+            int dbResult = dbHelper.updateProperty(updatedProperty);
+            Log.d(TAG, "Direct database update result: " + dbResult);
+
+            // Then try through PropertyManager
             int result = propertyManager.updateProperty(updatedProperty);
-            if (result > 0) {
+            Log.d(TAG, "PropertyManager update result: " + result);
+
+            if (result > 0 || dbResult > 0) {
                 Toast.makeText(this, "Property updated successfully", Toast.LENGTH_SHORT).show();
+                Log.d(TAG, "Property updated successfully");
+                // Return to previous screen
                 finish();
             } else {
-                Toast.makeText(this, "Error updating property", Toast.LENGTH_SHORT).show();
+                Log.e(TAG, "Update returned 0 - no rows affected");
+                Toast.makeText(this, "Error updating property - no changes made", Toast.LENGTH_SHORT).show();
             }
         } catch (NumberFormatException e) {
+            Log.e(TAG, "Number format exception", e);
             Toast.makeText(this, "Please enter valid numbers for price and occupants",
                     Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating property", e);
+            Toast.makeText(this, "Error updating property: " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -168,6 +272,7 @@ public class EditPropertyActivity extends AppCompatActivity {
             }
         }
 
+        Log.d(TAG, "Input validation result: " + isValid);
         return isValid;
     }
 
@@ -198,10 +303,40 @@ public class EditPropertyActivity extends AppCompatActivity {
     private boolean hasUnsavedChanges() {
         if (currentProperty == null) return false;
 
-        return !currentProperty.getName().equals(nameEditText.getText().toString().trim()) ||
-                !currentProperty.getLocation().equals(locationEditText.getText().toString().trim()) ||
-                !currentProperty.getDescription().equals(descriptionEditText.getText().toString().trim()) ||
-                currentProperty.getPricePerNight() != Double.parseDouble(priceEditText.getText().toString().trim()) ||
-                currentProperty.getMaxOccupants() != Integer.parseInt(maxOccupantsEditText.getText().toString().trim());
+        try {
+            String currentName = nameEditText.getText().toString().trim();
+            String currentLocation = locationEditText.getText().toString().trim();
+            String currentDescription = descriptionEditText.getText().toString().trim();
+
+            // Safely parse numeric fields
+            double currentPrice = 0;
+            int currentMaxOccupants = 0;
+
+            try {
+                if (!TextUtils.isEmpty(priceEditText.getText())) {
+                    currentPrice = Double.parseDouble(priceEditText.getText().toString().trim());
+                }
+
+                if (!TextUtils.isEmpty(maxOccupantsEditText.getText())) {
+                    currentMaxOccupants = Integer.parseInt(maxOccupantsEditText.getText().toString().trim());
+                }
+            } catch (NumberFormatException e) {
+                // If there's a parsing error, assume changes were made
+                return true;
+            }
+
+            boolean hasChanges = !currentProperty.getName().equals(currentName) ||
+                    !currentProperty.getLocation().equals(currentLocation) ||
+                    !currentProperty.getDescription().equals(currentDescription) ||
+                    currentProperty.getPricePerNight() != currentPrice ||
+                    currentProperty.getMaxOccupants() != currentMaxOccupants;
+
+            Log.d(TAG, "Has unsaved changes: " + hasChanges);
+            return hasChanges;
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking for unsaved changes", e);
+            // If there's any exception, assume no changes to be safe
+            return false;
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.example.rendbb.views;
 import android.widget.Toast;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
@@ -19,6 +20,7 @@ import java.util.Calendar;
 import java.util.List;
 
 public class PropertyDetailsActivity extends AppCompatActivity {
+    private static final String TAG = "PropertyDetailsActivity";
     private TextView nameTextView;
     private TextView locationTextView;
     private TextView descriptionTextView;
@@ -34,31 +36,41 @@ public class PropertyDetailsActivity extends AppCompatActivity {
     private DatabaseHelper dbHelper;
     private CalendarAdapter calendarAdapter;
     private List<Integer> bookedDays;
+    private double price;
+    private int maxOccupants;
+    private int managerId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_property_details);
 
-        // Enable back button in action bar
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle("Property Details");
+        try {
+            // Enable back button in action bar
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+                getSupportActionBar().setTitle("Property Details");
+            }
 
-        // Initialize managers
-        propertyManager = new PropertyManager(this);
-        dbHelper = new DatabaseHelper(this);
+            // Initialize managers
+            propertyManager = new PropertyManager(this);
+            dbHelper = new DatabaseHelper(this);
 
-        // Initialize views
-        initializeViews();
+            // Initialize views
+            initializeViews();
 
-        // Get property details from intent
-        getPropertyDetails();
+            // Get property details from intent
+            getPropertyDetails();
 
-        // Setup calendar
-        setupCalendar();
+            // Setup calendar
+            setupCalendar();
 
-        // Setup button listeners
-        setupClickListeners();
+            // Setup button listeners
+            setupClickListeners();
+        } catch (Exception e) {
+            Log.e(TAG, "Error in onCreate", e);
+            Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void initializeViews() {
@@ -78,18 +90,25 @@ public class PropertyDetailsActivity extends AppCompatActivity {
         propertyId = intent.getIntExtra("propertyId", -1);
 
         if (propertyId == -1) {
+            Toast.makeText(this, "Error loading property", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        nameTextView.setText(intent.getStringExtra("name"));
-        locationTextView.setText(intent.getStringExtra("location"));
-        descriptionTextView.setText(intent.getStringExtra("description"));
-        statusTextView.setText(intent.getStringExtra("status"));
-        priceTextView.setText(String.format("$%.2f/night",
-                intent.getDoubleExtra("price", 0.0)));
-        occupantsTextView.setText(String.format("Max Occupants: %d",
-                intent.getIntExtra("maxOccupants", 0)));
+        String name = intent.getStringExtra("name");
+        String location = intent.getStringExtra("location");
+        String description = intent.getStringExtra("description");
+        String status = intent.getStringExtra("status");
+        price = intent.getDoubleExtra("price", 0.0);
+        maxOccupants = intent.getIntExtra("maxOccupants", 0);
+        managerId = intent.getIntExtra("managerId", 1);
+
+        nameTextView.setText(name);
+        locationTextView.setText(location);
+        descriptionTextView.setText(description);
+        statusTextView.setText(status);
+        priceTextView.setText(String.format("$%.2f/night", price));
+        occupantsTextView.setText(String.format("Max Occupants: %d", maxOccupants));
     }
 
     private void setupCalendar() {
@@ -121,9 +140,21 @@ public class PropertyDetailsActivity extends AppCompatActivity {
 
     private void setupClickListeners() {
         editButton.setOnClickListener(v -> {
-            Intent intent = new Intent(this, EditPropertyActivity.class);
-            intent.putExtra("propertyId", propertyId);
-            startActivity(intent);
+            try {
+                Intent intent = new Intent(this, EditPropertyActivity.class);
+                intent.putExtra("propertyId", propertyId);
+                intent.putExtra("name", nameTextView.getText().toString());
+                intent.putExtra("location", locationTextView.getText().toString());
+                intent.putExtra("description", descriptionTextView.getText().toString());
+                intent.putExtra("status", statusTextView.getText().toString());
+                intent.putExtra("price", price);
+                intent.putExtra("maxOccupants", maxOccupants);
+                intent.putExtra("managerId", managerId);
+                startActivity(intent);
+            } catch (Exception e) {
+                Log.e(TAG, "Error opening edit screen", e);
+                Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            }
         });
 
         bookButton.setOnClickListener(v -> {

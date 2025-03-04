@@ -14,10 +14,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CalendarAdapter extends BaseAdapter {
-    private Context context;
-    private Calendar calendar;
-    private Map<Integer, BookingInfo> bookings;
+    private final Context context;
+    private final Calendar calendar;
+    private final Map<Integer, BookingInfo> bookings;
     private int selectedDay = -1;
+
+    private static final int DAYS_IN_WEEK = 7;
+    private static final int MAX_DAYS_DISPLAYED = 35; // 5 weeks
 
     public CalendarAdapter(Context context, Calendar calendar) {
         this.context = context;
@@ -27,7 +30,7 @@ public class CalendarAdapter extends BaseAdapter {
 
     @Override
     public int getCount() {
-        return calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+        return MAX_DAYS_DISPLAYED;
     }
 
     @Override
@@ -42,60 +45,34 @@ public class CalendarAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        ViewHolder holder;
-
+        View dayView;
         if (convertView == null) {
-            convertView = LayoutInflater.from(context).inflate(R.layout.calendar_day_cell, parent, false);
-            holder = new ViewHolder();
-            holder.dayText = convertView.findViewById(R.id.dayText);
-            holder.indicatorView = convertView.findViewById(R.id.bookingIndicator);
-            convertView.setTag(holder);
+            LayoutInflater inflater = LayoutInflater.from(context);
+            dayView = inflater.inflate(R.layout.day_cell, null);
         } else {
-            holder = (ViewHolder) convertView.getTag();
+            dayView = convertView;
         }
 
+        TextView dayText = dayView.findViewById(R.id.dayText);
         int day = position + 1;
-        holder.dayText.setText(String.valueOf(day));
 
-        // Style for selected day
+        dayText.setText(String.valueOf(day));
+
+        // Set text color based on whether the day is booked
+        if (bookings.containsKey(day)) {
+            dayText.setTextColor(Color.RED);
+        } else {
+            dayText.setTextColor(Color.BLACK);
+        }
+
+        // Highlight selected day
         if (day == selectedDay) {
-            convertView.setBackgroundColor(Color.argb(50, 0, 0, 255));
+            dayView.setBackgroundColor(Color.LTGRAY);
         } else {
-            convertView.setBackgroundColor(Color.TRANSPARENT);
+            dayView.setBackgroundColor(Color.TRANSPARENT);
         }
 
-        // Style for booked days
-        BookingInfo booking = bookings.get(day);
-        if (booking != null) {
-            switch (booking.getStatus()) {
-                case "confirmed":
-                    holder.indicatorView.setBackgroundColor(Color.GREEN);
-                    break;
-                case "pending":
-                    holder.indicatorView.setBackgroundColor(Color.YELLOW);
-                    break;
-                case "completed":
-                    holder.indicatorView.setBackgroundColor(Color.BLUE);
-                    break;
-                default:
-                    holder.indicatorView.setBackgroundColor(Color.GRAY);
-            }
-            holder.indicatorView.setVisibility(View.VISIBLE);
-        } else {
-            holder.indicatorView.setVisibility(View.GONE);
-        }
-
-        return convertView;
-    }
-
-    private static class ViewHolder {
-        TextView dayText;
-        View indicatorView;
-    }
-
-    public void setSelectedDay(int day) {
-        this.selectedDay = day;
-        notifyDataSetChanged();
+        return dayView;
     }
 
     public void addBooking(int day, BookingInfo booking) {
@@ -103,22 +80,15 @@ public class CalendarAdapter extends BaseAdapter {
         notifyDataSetChanged();
     }
 
-    public void removeBooking(int day) {
-        bookings.remove(day);
-        notifyDataSetChanged();
-    }
-
     public BookingInfo getBooking(int day) {
         return bookings.get(day);
     }
 
-    public void clearBookings() {
-        bookings.clear();
-        notifyDataSetChanged();
+    public void setSelectedDay(int day) {
+        this.selectedDay = day;
     }
 
-    public void setMonth(Calendar newCalendar) {
-        this.calendar = newCalendar;
-        notifyDataSetChanged();
+    public Calendar getCalendar() {
+        return calendar;
     }
 }
