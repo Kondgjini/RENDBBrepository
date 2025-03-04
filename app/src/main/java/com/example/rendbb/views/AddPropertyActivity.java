@@ -11,7 +11,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.rendbb.R;
 import com.example.rendbb.models.PropertyItem;
 import com.example.rendbb.repositories.PropertyManager;
-import com.example.rendbb.utilities.DatabaseHelper;
 
 public class AddPropertyActivity extends AppCompatActivity {
     private EditText nameEditText;
