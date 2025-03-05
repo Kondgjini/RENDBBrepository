@@ -9,6 +9,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.rendbb.R;
 import com.example.rendbb.utilities.DatabaseHelper;
+import com.example.rendbb.views.SessionManager;
 
 public class LoginActivity extends AppCompatActivity {
     private EditText txtUsername, txtPassword;
@@ -28,7 +29,8 @@ public class LoginActivity extends AppCompatActivity {
         dbHelper = new DatabaseHelper(this);
         session = new SessionManager(getApplicationContext());
 
-        // Check if user is already logged in
+        // Check if user is already logged in.
+        // If you want to force the login screen (for testing), comment out the following block.
         if (session.isLoggedIn()) {
             Intent intent = new Intent(LoginActivity.this, ManagerDashboardActivity.class);
             startActivity(intent);
