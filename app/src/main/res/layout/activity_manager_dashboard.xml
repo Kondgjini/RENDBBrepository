@@ -1,43 +1,50 @@
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- Preferences Gear -->
     <ImageButton
         android:id="@+id/preferencesGear"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:src="@android:drawable/ic_menu_preferences"
         android:layout_gravity="end"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="@string/preferences"
-        android:src="@drawable/ic_settings" />
+        android:contentDescription="Preferences" />
 
-    <!-- Buttons -->
     <Button
         android:id="@+id/addPropertyButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/add_property" />
+        android:text="Add Property" />
 
     <Button
         android:id="@+id/manageBookingsButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/manage_bookings" />
+        android:text="Manage Bookings"
+        android:layout_marginTop="8dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/propertiesRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="16dp" />
 
     <Button
         android:id="@+id/clearDatabaseButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Clear Database" />
+        android:text="Clear Database"
+        android:layout_marginTop="8dp" />
 
-    <!-- RecyclerView -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/propertiesRecyclerView"
+    <Button
+        android:id="@+id/logoutButton"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="16dp" />
+        android:layout_height="wrap_content"
+        android:text="Logout"
+        android:layout_marginTop="16dp"/>
+
 </LinearLayout>

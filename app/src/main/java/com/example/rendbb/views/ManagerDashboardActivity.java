@@ -22,12 +22,13 @@ import java.util.List;
 public class ManagerDashboardActivity extends AppCompatActivity {
 
     private static final String TAG = "ManagerDashboardActivity";
-    private Button addPropertyButton, manageBookingsButton, clearDatabaseButton;
+    private Button addPropertyButton, manageBookingsButton, clearDatabaseButton, logoutButton;
     private ImageButton preferencesGear;
     private RecyclerView propertiesRecyclerView;
     private PropertyManager propertyManager;
     private PropertyAdapter propertyAdapter;
     private DatabaseHelper dbHelper;
+    private SessionManager session;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +38,7 @@ public class ManagerDashboardActivity extends AppCompatActivity {
 
             propertyManager = new PropertyManager(this);
             dbHelper = new DatabaseHelper(this);
+            session = new SessionManager(getApplicationContext());
             initializeViews();
             setupClickListeners();
             setupRecyclerView();
@@ -53,6 +55,7 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         preferencesGear = findViewById(R.id.preferencesGear);
         propertiesRecyclerView = findViewById(R.id.propertiesRecyclerView);
         clearDatabaseButton = findViewById(R.id.clearDatabaseButton);
+        logoutButton = findViewById(R.id.logoutButton);
     }
 
     private void setupClickListeners() {
@@ -75,6 +78,13 @@ public class ManagerDashboardActivity extends AppCompatActivity {
             dbHelper.clearAllTables();
             Toast.makeText(this, "Database cleared", Toast.LENGTH_SHORT).show();
             loadDashboardData();
+        });
+
+        logoutButton.setOnClickListener(v -> {
+            session.logoutUser();
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivity(intent);
+            finish();
         });
     }
 
