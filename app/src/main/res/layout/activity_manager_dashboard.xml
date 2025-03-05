@@ -34,6 +34,12 @@
         android:layout_height="wrap_content"
         android:text="Clear Database" />
 
+    <Button
+        android:id="@+id/logoutButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Logout" />
+
     <!-- RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/propertiesRecyclerView"

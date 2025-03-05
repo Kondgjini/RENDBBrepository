@@ -22,12 +22,13 @@ import java.util.List;
 public class ManagerDashboardActivity extends AppCompatActivity {
 
     private static final String TAG = "ManagerDashboardActivity";
-    private Button addPropertyButton, manageBookingsButton, clearDatabaseButton;
+    private Button addPropertyButton, manageBookingsButton, clearDatabaseButton, logoutButton;
     private ImageButton preferencesGear;
     private RecyclerView propertiesRecyclerView;
     private PropertyManager propertyManager;
     private PropertyAdapter propertyAdapter;
     private DatabaseHelper dbHelper;
+    private SessionManager session;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +38,7 @@ public class ManagerDashboardActivity extends AppCompatActivity {
 
             propertyManager = new PropertyManager(this);
             dbHelper = new DatabaseHelper(this);
+            session = new SessionManager(getApplicationContext());
             initializeViews();
             setupClickListeners();
             setupRecyclerView();
@@ -53,6 +55,7 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         preferencesGear = findViewById(R.id.preferencesGear);
         propertiesRecyclerView = findViewById(R.id.propertiesRecyclerView);
         clearDatabaseButton = findViewById(R.id.clearDatabaseButton);
+        logoutButton = findViewById(R.id.logoutButton);
     }
 
     private void setupClickListeners() {
@@ -75,6 +78,16 @@ public class ManagerDashboardActivity extends AppCompatActivity {
             dbHelper.clearAllTables();
             Toast.makeText(this, "Database cleared", Toast.LENGTH_SHORT).show();
             loadDashboardData();
+        });
+
+        logoutButton.setOnClickListener(v -> {
+            session.logoutUser();
+            Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, LoginActivity.class);
+            // Clear back stack so user can't go back to dashboard after logout
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
+            finish();
         });
     }
 
@@ -101,6 +114,9 @@ public class ManagerDashboardActivity extends AppCompatActivity {
                 intent.putExtra("location", item.getLocation());
                 intent.putExtra("description", item.getDescription());
                 intent.putExtra("status", item.getStatus());
+                intent.putExtra("price", item.getPricePerNight());
+                intent.putExtra("maxOccupants", item.getMaxOccupants());
+                intent.putExtra("managerId", item.getManagerId());
                 startActivity(intent);
             });
 
@@ -195,6 +211,10 @@ public class ManagerDashboardActivity extends AppCompatActivity {
     }
 
     private int getStatusPriority(String status) {
+        if (status == null) {
+            return 4;
+        }
+
         switch (status.toLowerCase()) {
             case "occupied":
                 return 1;
