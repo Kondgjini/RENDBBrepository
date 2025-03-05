@@ -1,39 +1,16 @@
 <resources>
     <string name="app_name">RENDBB</string>
-    <string name="property_name">Emri i Pronës</string>
-    <string name="property_location">Vendndodhja e Pronës</string>
-    <string name="property_description">Përshkrimi i Pronës</string>
-    <string name="add_property">Shto Pronë</string>
-    <string name="username">Emri i përdoruesit</string>
-    <string name="password">Fjalëkalimi</string>
-    <string name="confirm_password">Konfirmo Fjalëkalimin</string>
-    <string name="register">Regjistrohu</string>
-    <string name="login">Hyr</string>
-    <string name="manage_bookings">Menaxho Rezervimet</string>
-    <string name="preferences">Preferencat</string>
+    <string name="property_name">Property Name</string>
+    <string name="property_location">Property Location</string>
+    <string name="property_description">Property Description</string>
+    <string name="add_property">Add Property</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="register">Register</string>
+    <string name="login">Login</string>
+    <string name="manage_bookings">Manage Bookings</string>
+    <string name="preferences">Preferences</string>
+    <!-- Added missing string -->
     <string name="email">Email</string>
-
-    <!-- Additional strings -->
-    <string name="login_button">Hyr</string>
-    <string name="register_button">Regjistrohu</string>
-    <string name="property_details">Detajet e Pronës</string>
-    <string name="edit_property">Ndrysho Pronën</string>
-    <string name="add_booking">Shto Rezervim</string>
-    <string name="property_management">Menaxhimi i Pronës</string>
-    <string name="dashboard">Paneli</string>
-    <string name="empty_view">Nuk u gjetën rezervime</string>
-    <string name="please_fill_all_fields">Ju lutemi plotësoni të gjitha fushat</string>
-    <string name="invalid_credentials">Kredencialet e pavlefshme</string>
-    <string name="error_loading_bookings">Gabim gjatë ngarkimit të rezervimeve</string>
-    <string name="username_already_exists">Emri i përdoruesit ekziston tashmë</string>
-    <string name="email_already_exists">Email-i ekziston tashmë</string>
-    <string name="registration_successful">Regjistrimi u krye me sukses</string>
-    <string name="registration_failed">Regjistrimi dështoi: </string>
-    <string name="passwords_do_not_match">Fjalëkalimet nuk përputhen</string>
-    <string name="enter_username">Ju lutemi futni emrin e përdoruesit</string>
-    <string name="enter_email">Ju lutemi futni email-in</string>
-    <string name="enter_password">Ju lutemi futni fjalëkalimin</string>
-    <string name="admin">Admin</string>
-    <string name="admin_password">admin123</string>
-    <string name="admin_email">admin@rendbb.com</string>
 </resources>

@@ -38,7 +38,6 @@ dependencies {
     implementation("androidx.activity:activity:1.7.2") // Latest stable version
     implementation("androidx.constraintlayout:constraintlayout:2.1.4") // Latest stable version
     implementation("androidx.recyclerview:recyclerview:1.3.1") // Updated to latest
-    implementation ("com.google.android.material:material:1.6.1")
     implementation ("androidx.preference:preference:1.1.1")
 
     testImplementation("junit:junit:4.13.2") // Latest stable version
